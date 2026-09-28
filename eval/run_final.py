@@ -22,7 +22,7 @@ def validate_freeze(freeze, root=ROOT):
     if freeze.get('status')!='frozen' or freeze.get('gates')!={key:True for key in GATES}:
         raise ValueError('All freeze gates must be explicitly complete.')
     hashes=freeze.get('sha256',{})
-    required={'scout/service/prompt.py','scout/service/engine.py','scout/service/validators.py','scout/service/evidence.py','scout/service/schemas.py','scout/service/budget.py','scout/service/providers.py','scout/service/store.py','scout/tools/pai_tools.py','scout/tools/mcp_server.py','scout/tools/mcp_client.py','eval/final_grade.py','eval/final_analysis.py','eval/report.py','eval/run_matrix.py','eval/run_final.py','eval/tasks/final/_keys.json','m0/data/pai_dump_2026-09-06.sqlite'} | {f'eval/tasks/final/{t}.json' for t in FINAL_TASKS}
+    required={'scout/service/prompt.py','scout/service/engine.py','scout/service/validators.py','scout/service/evidence.py','scout/service/schemas.py','scout/service/budget.py','scout/service/providers.py','scout/service/store.py','scout/tools/pai_tools.py','scout/tools/mcp_server.py','scout/tools/mcp_client.py','eval/final_grade.py','eval/final_analysis.py','eval/report.py','eval/run_matrix.py','eval/run_final.py','eval/agent_grading.py','eval/grade.py','eval/grading/agent-policy-v1.json','eval/grading/reviewer-instructions-v1.md','eval/tasks/final/_keys.json','m0/data/pai_dump_2026-09-06.sqlite'} | {f'eval/tasks/final/{t}.json' for t in FINAL_TASKS}
     if not required<=set(hashes):raise ValueError('Freeze lacks required source/data/task fingerprints.')
     for relative,expected in hashes.items():
         p=(root/relative).resolve()
@@ -55,7 +55,8 @@ def main():
         used=sum(m.get('spent_usd',0)+m.get('committed_usd',0) for m in previous if m.get('provider')=='anthropic' and not m.get('label','').startswith('m0'))
         if used+freeze['final_cap_usd']>65+1e-9:
             raise ValueError('Final batch would exceed the $65 total study cap.')
-        experiment=dict(kind='final',notes=['Frozen final evaluation; retain every launched attempt.'],qualification_source=freeze['qualification_source'],grading_method=freeze['grading_method'],freeze_sha256=hashlib.sha256(args.freeze.read_bytes()).hexdigest())
+        policy=json.loads((ROOT/'eval/grading/agent-policy-v1.json').read_text())
+        experiment=dict(grading_policy=policy,kind='final',notes=['Frozen final evaluation; retain every launched attempt.'],qualification_source=freeze['qualification_source'],grading_method=freeze['grading_method'],freeze_sha256=hashlib.sha256(args.freeze.read_bytes()).hexdigest())
         manifest=run_matrix(client,out,tasks,label=args.label,models=['haiku','opus'],designs=['baseline','redesigned'],reps=3,cap_usd=freeze['final_cap_usd'],concurrency=1,experiment=experiment)
         write_json(out/'manifest.json',manifest)
     print(f"Launched {manifest['launched']}/132; confirmed ${manifest['spent_usd']:.4f}")

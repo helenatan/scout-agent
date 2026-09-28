@@ -179,6 +179,14 @@ def main() -> None:
             g = grade_final(rec, keys.get(rec["task_id"], {}), decisions.get(digest(rec["run_id"])[:20]))
         g.update({"task_id": rec.get("task_id"), "config": rec.get("config"), "rep": rec.get("rep")})
         grades[rec["run_id"]] = g
+    if (rdir / "grading-policy.json").exists():
+        from eval.agent_grading import apply, VERSION
+        policy=json.loads((rdir / "grading-policy.json").read_text())
+        if policy.get('version')!=VERSION:raise ValueError('Unknown agent grading policy')
+        agent_grades,status=apply(rdir,keys)
+        for rid,value in agent_grades.items():
+            grades[rid].update(value)
+        (rdir / 'agent-grading-status.json').write_text(json.dumps(status,indent=2)+'\n')
     (rdir / "grades.json").write_text(json.dumps(grades, indent=1, ensure_ascii=False))
     if any(g.get("task_id") in FINAL_IDS for g in grades.values()):
         (rdir / "answer-review-packet.json").write_text(json.dumps(build_packets(rdir, keys), indent=2, ensure_ascii=False)+"\n")

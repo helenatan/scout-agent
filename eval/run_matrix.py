@@ -98,6 +98,8 @@ def run_matrix(client, out: Path, tasks: list[dict], *, label: str, models: list
                 "order": "interleaved: rep -> task -> design -> model", "planned": len(plan), "launched": 0,
                 "runs": [], "launch_intents": [], "notes": ["Development run; not the final evaluation."]}
     if experiment:
+        if "grading_policy" in experiment:
+            write_json(out / "grading-policy.json", experiment["grading_policy"])
         for field in ("kind", "qualification_source", "grading_method", "freeze_sha256", "notes"):
             if field in experiment:
                 manifest[field] = experiment[field]

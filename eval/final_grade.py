@@ -34,7 +34,7 @@ def packet(rec, entry):
     return {'review_id':digest(rec['run_id'])[:20], 'task_id':rec['task_id'],
             'context':review_context(rec,entry), 'task':rec['request']['task'],
             'answer':rec.get('answer'), 'evidence':rec.get('evidence', []),
-            'delivered_evidence':rec.get('trace',{}).get('evidence',[]),
+            'delivered_evidence':[{k:v for k,v in e.items() if k not in {'quotable_text','quotable_spans'}} for e in rec.get('trace',{}).get('evidence',[])],
             'reference':entry['key'], 'criteria':criteria(entry)}
 
 def grade_final(rec, entry, decision=None):

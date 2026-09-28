@@ -36,3 +36,7 @@ Developer interviews were deferred for this research/demo release. The 80% quali
 ```
 
 Research tests requiring the private original dataset are not included in the public CI check. See `docs/release-status.md` and the saved results for the exact completion state.
+
+## Answer grading
+
+Two fresh agents independently grade completed answers against private reference keys and the rubric. Human review covers disagreements, uncertainty and one predeclared sample per task. An overturned sampled verdict expands human review to all answers for that task. Agreement by two agents is not human validation; shared-model errors may be correlated. See `eval/grading/agent-policy-v1.json`. Final runs have not started.
