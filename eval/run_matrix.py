@@ -45,7 +45,7 @@ def fetch_record(client, out: Path, entry: dict) -> dict:
     payload = trace.json()
     rec.setdefault("trace", {}).update({k: payload.get(k, []) for k in ("events", "requests", "evidence")})
     write_json(out / "runs" / f"{rid}.json", rec)
-    entry.update(state=rec["state"], usd=rec["cost"]["usd"], settled=rec["cost"].get("settled", False))
+    entry.update(state=rec["state"], usd=rec["cost"]["usd"], settled=rec["cost"].get("settled", False), reason=(rec.get("outcome") or {}).get("reason"))
     unknown = sum(float(q.get("reserved_usd") or 0) for q in payload.get("requests", []) if not q.get("settled", False))
     if not entry["settled"] and not unknown:
         # Older services may lack request ledgers; retain the remaining budget conservatively.
@@ -84,14 +84,18 @@ def reconcile(client, out: Path, manifest: dict, wait_seconds: float = 0) -> Non
 
 def run_matrix(client, out: Path, tasks: list[dict], *, label: str, models: list[str], designs: list[str],
                reps: int, cap_usd: float, concurrency: int = 1, wait_seconds: float = 600,
-               settlement_wait_seconds: float = 0, experiment: dict | None = None) -> dict:
-    # Exclusive creation also prevents two runner processes from sharing a label.
-    out.mkdir(parents=True, exist_ok=False)
-    (out / "runs").mkdir()
+               settlement_wait_seconds: float = 0, experiment: dict | None = None, resume: bool = False) -> dict:
+    plan = [(rep, t, model, design) for rep in range(reps) for t in tasks for design in designs for model in models]
+    if not resume:
+        # Exclusive creation also prevents two runner processes from sharing a label.
+        out.mkdir(parents=True, exist_ok=False)
+        (out / "runs").mkdir()
     health_response = client.get("/healthz")
     health_response.raise_for_status()
     health = health_response.json()
-    plan = [(rep, t, model, design) for rep in range(reps) for t in tasks for design in designs for model in models]
+    if resume:
+        return _resume(client, out, plan, health, cap_usd=cap_usd, concurrency=concurrency, wait_seconds=wait_seconds,
+                       settlement_wait_seconds=settlement_wait_seconds)
     manifest = {"label": label, "suite_version": tasks[0]["suite_version"] if tasks else "?",
                 "started_at": dt.datetime.now(dt.timezone.utc).isoformat(), "provider": health.get("provider"),
                 "api": str(client.base_url), "tool_transport": health.get("tool_transport"), "settings": health.get("settings"),
@@ -106,6 +110,58 @@ def run_matrix(client, out: Path, tasks: list[dict], *, label: str, models: list
     if health.get("provider") == "fake":
         manifest["notes"].append("FAKE provider: scripted demo answers, no real model.")
     save_manifest(out, manifest)
+    return _launch(client, out, manifest, plan, health, label=label, cap_usd=cap_usd, concurrency=concurrency,
+                   wait_seconds=wait_seconds, settlement_wait_seconds=settlement_wait_seconds)
+
+
+def plan_key(label: str, task: dict, model: str, design: str, rep: int, settings) -> str:
+    identity = {"label": label, "task": task, "model": model, "design": design, "rep": rep, "settings": settings}
+    return "matrix:" + hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+
+
+def _resume(client, out: Path, plan: list, health: dict, *, cap_usd: float, concurrency: int, wait_seconds: float,
+            settlement_wait_seconds: float) -> dict:
+    """Continue a label stopped by `provider_unavailable`. Launched attempts are never relaunched, except that an
+    attempt the provider refused before any model output is retried once under a derived key; the refused record
+    moves to runs-superseded/ and stays listed in the manifest."""
+    manifest = json.loads((out / "manifest.json").read_text())
+    if manifest.get("settings") != health.get("settings") or manifest.get("provider") != health.get("provider"):
+        raise ValueError("resume requires the same provider and settings as the original launch")
+    if manifest.get("launches_unresolved"):
+        raise ValueError("reconcile unresolved launch intents first")
+    reconcile(client, out, manifest, 0)
+    manifest.pop("stop_reason", None)
+    manifest.setdefault("superseded_runs", [])
+    manifest.setdefault("resumed_at", []).append(dt.datetime.now(dt.timezone.utc).isoformat())
+    intents = {i["idempotency_key"]: i for i in manifest["launch_intents"]}
+    runs = {e["run_id"]: e for e in manifest["runs"]}
+    todo = []
+    for rep, task, model, design in plan:
+        key = plan_key(manifest["label"], task, model, design, rep, health.get("settings"))
+        retry = key + "#r1"
+        if retry in intents:
+            continue
+        if key in intents:
+            entry = runs.get(intents[key].get("run_id"))
+            if entry is None or entry.get("reason") != "provider_unavailable":
+                continue
+            src = out / "runs" / f"{entry['run_id']}.json"
+            (out / "runs-superseded").mkdir(exist_ok=True)
+            if src.exists():
+                src.replace(out / "runs-superseded" / src.name)
+            manifest["runs"].remove(entry)
+            manifest["superseded_runs"].append({**entry, "superseded_reason": "provider_unavailable before any model output; retried once"})
+            manifest["launched"] -= 1
+            todo.append((rep, task, model, design, retry))
+        else:
+            todo.append((rep, task, model, design, key))
+    save_manifest(out, manifest)
+    return _launch(client, out, manifest, todo, health, label=manifest["label"], cap_usd=cap_usd, concurrency=concurrency,
+                   wait_seconds=wait_seconds, settlement_wait_seconds=settlement_wait_seconds)
+
+
+def _launch(client, out: Path, manifest: dict, plan: list, health: dict, *, label: str, cap_usd: float, concurrency: int,
+            wait_seconds: float, settlement_wait_seconds: float) -> dict:
     active: list[dict] = []
 
     def drain():
@@ -115,6 +171,8 @@ def run_matrix(client, out: Path, tasks: list[dict], *, label: str, models: list
                 save_manifest(out, manifest)
                 if entry["state"] in TERMINAL:
                     active.remove(entry)  # terminal answers do not wait for billing
+                    if entry.get("reason") == "provider_unavailable":
+                        manifest["stop_reason"] = "provider_unavailable"
                 elif time.monotonic() >= entry["wait_until"]:
                     raise TimeoutError(f"Run {entry['run_id']} still active; saved ID can be reconciled later")
             if len(active) < concurrency:
@@ -122,14 +180,16 @@ def run_matrix(client, out: Path, tasks: list[dict], *, label: str, models: list
             time.sleep(1.0)
 
     try:
-        for rep, task, model, design in plan:
+        for item in plan:
+            rep, task, model, design = item[:4]
             body = {**task["request"], "model": model, "tool_design": design}
+            if manifest.get("stop_reason") == "provider_unavailable":
+                break  # subscription limit: stop launching; resume the same label later with --resume
             required = float(body["max_cost_usd"])
             if manifest["spent_usd"] + manifest["committed_usd"] + required > cap_usd + 1e-9:
                 manifest["stop_reason"] = "local_spending_cap"
                 break
-            identity = {"label": label, "task": task, "model": model, "design": design, "rep": rep, "settings": health.get("settings")}
-            key = "matrix:" + hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+            key = item[4] if len(item) > 4 else plan_key(label, task, model, design, rep, health.get("settings"))
             intent = {"idempotency_key": key, "request": body, "task_id": task["id"], "config": CONFIG[(model, design)], "rep": rep, "status": "submitting"}
             manifest["launch_intents"].append(intent)
             save_manifest(out, manifest)  # ambiguous POST failures retain their identity; never auto-resubmit
@@ -174,6 +234,7 @@ def main() -> None:
     ap.add_argument("--wait-seconds", type=float, default=600, help="maximum wait for each accepted run to become terminal")
     ap.add_argument("--settlement-wait-seconds", type=float, default=0, help="bounded refresh window for outstanding charges")
     ap.add_argument("--reconcile-only", action="store_true", help="refresh saved run IDs without launching new runs")
+    ap.add_argument("--resume", action="store_true", help="continue a label stopped by provider_unavailable (subscription limits)")
     a = ap.parse_args()
     if a.concurrency < 1 or a.reps < 1 or min(a.cap_usd, a.wait_seconds, a.settlement_wait_seconds) < 0:
         ap.error("concurrency/reps must be positive; budgets/waits must be nonnegative")
@@ -190,7 +251,7 @@ def main() -> None:
                 tasks = [t for t in tasks if t["id"] in set(a.only.split(","))]
             manifest = run_matrix(client, out, tasks, label=a.label, models=a.models.split(","), designs=a.designs.split(","),
                                   reps=a.reps, cap_usd=a.cap_usd, concurrency=a.concurrency, wait_seconds=a.wait_seconds,
-                                  settlement_wait_seconds=a.settlement_wait_seconds)
+                                  settlement_wait_seconds=a.settlement_wait_seconds, resume=a.resume)
         print(f"Saved {manifest['launched']} launched runs; ${manifest['spent_usd']:.4f} confirmed, "
               f"${manifest['committed_usd']:.4f} reserved; {len(manifest.get('reconciliation_pending', []))} pending reconciliation -> {out}")
 

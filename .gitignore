@@ -9,3 +9,4 @@ __pycache__/
 *.log
 eval/results/
 eval/tasks/**/_*
+site/data.json

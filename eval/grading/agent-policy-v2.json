@@ -1,0 +1,25 @@
+{
+ "version": "dual-agent-human-audit-v1",
+ "status": "prepared_before_final_runs",
+ "authorization": "User accepted agent grading plus human disagreements/sample on September 27, 2026.",
+ "supersedes": "The human_answer_review_required flag in archived final-v3-reviewed rubrics is superseded only for concordant agent judgments outside the sample and expansion set. Original keys and rubric content remain unchanged.",
+ "reviewers": [
+  "reviewer-a",
+  "reviewer-b"
+ ],
+ "independence": "Two fresh Claude Code subagent contexts launched by the orchestrating session: reviewer-a = Claude Opus 5.5, reviewer-b = Claude Fable 5.1. Each gets a separate folder with only reviewer-instructions-v1.md and blinded packets, and is told to read nothing else (instruction-enforced, not sandboxed). Neither sees the other's judgments, model/configuration/cost labels or outcomes. Different Claude models from one vendor; errors may still be correlated. The orchestrator stages packets and validates files but does not grade.",
+ "agreement": "Every Boolean rubric criterion must match, with a nonempty reason per criterion and no uncertainty flags; otherwise human adjudication.",
+ "sample": "One runtime-completed answer per each of the 11 tasks. Choose lowest SHA256 of sample-seed-0|task_id|config|rep. Fixed before outcomes; only runtime-failed attempts are ineligible for semantic review. Final sample selected after all attempts terminate.",
+ "expansion": "If a sampled human verdict overturns agent unanimous pass/fail, require human review of every completed answer for that task across all four conditions and repetitions.",
+ "runtime_failures": "Automatic failures; no model or human may override them as passes.",
+ "missing_or_stale_reviews": "Pending, not passes or confirmed failures.",
+ "human_workload": "At most 11 initial sample cases, plus disagreements, uncertainty and any task expansions; overlapping categories counted once.",
+ "cost_scope": "Reviewer usage runs on the owner's Claude Code subscription and is reported separately from evaluation token usage. No Anthropic API credit is used for grading.",
+ "no_tuning": "No final-task outcomes used to change agent instructions, runtime or task keys. Any necessary correction requires a new version and separate results.",
+ "policy_file_version": "agent-policy-v2",
+ "change_from_v1": "Reviewer implementation and provenance only. Agreement, sample, expansion, runtime-failure and pending rules are unchanged (same method id, same code in eval/agent_grading.py). v1 is preserved.",
+ "reviewer_implementation": "claude-code-subagents-v1",
+ "calibration": "eval/readiness/agent-grading-calibration-claude-v1.json (both reviewers matched all four fictional cases; one criterion-level disagreement on a case that fails either way). The Codex calibration (agent-grading-calibration-v1.json) is historical and does not validate these reviewers.",
+ "batching": "Each reviewer identity is run as one fresh subagent context per final task (up to 11 contexts per reviewer, same model and instructions), given only that task's blinded packets. Batches are keyed by task, not by configuration; packet order is the blinded review_id order. Batching is predeclared here, before any final outcome exists.",
+ "file_handling": "Reviewers write <review_id>.json into their own scratch output folder; the orchestrator copies them unmodified into results/<label>/agent-reviews/<reviewer>/ and validates them with eval/agent_grading.py. Invalid or missing files remain pending (never passes)."
+}

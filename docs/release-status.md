@@ -7,5 +7,7 @@ September 27, 2026: research/demo release in preparation; no final result claime
 - Human reference-key review complete. Generated-answer grading is a separate requirement; dual-agent grading with human disagreements and a predeclared sample approved before freeze.
 - Final grader rejects stale/incomplete approvals, and the report detects missing/extra final cells. The planned final matrix is 11 tasks × four configurations × three repetitions.
 - Developer interviews deferred. Qualification thresholds are owner-chosen assumptions.
-- Public site is an interactive fictional illustration plus saved development summaries. Original job descriptions, private reference keys and review journals are excluded.
-- Private repository publication is complete. Prepared freeze awaits explicit Anthropic payload-transfer authorization and final preflight. Final attempts, answer grading, final report and public deployment remain open.
+- Original job descriptions, private reference keys, raw run records and review journals are excluded from the repository.
+- Execution moved to headless Claude Code on the owner subscription (claude-code-cli-v1); 32-attempt subscription rehearsal (27 automatic passes, $2.33 notional) preceded the freeze `final-freeze-v2-claude-code`.
+- Final 132 attempts completed September 27 ($14.47 notional). Dual Claude reviewers graded all 119 completed answers; 40 items await human review, so results are provisional (`docs/final-results.md`).
+- Static site rebuilt from the owner's design and published as a private claude.ai Artifact. Repository remains private; no license chosen.

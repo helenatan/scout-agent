@@ -165,7 +165,8 @@ class RunEngine:
             "started_at": None, "ended_at": None,
             "request": {**req.model_dump(), "idempotency_key": idem_key},
             "model": model_id, "tool_design": req.tool_design,
-            "settings": self.settings.public(req.model, getattr(self.provider, "name", "anthropic")),
+            "settings": {**self.settings.public(req.model, getattr(self.provider, "name", "anthropic")),
+                         **({"execution": self.provider.public(req.model), "prompt_caching": "managed by Claude Code"} if getattr(self.provider, "executes_loop", False) else {})},
             "outcome": None,
             "answer": {"summary": None, "findings": [], "limitations": []}, "evidence": [],
             "usage": {"by_model": {}, "requests": 0, "cumulative_input_tokens": 0, "peak_request_input_tokens": 0},
@@ -384,6 +385,9 @@ class RunEngine:
         tools = list(client.tool_definitions()) + [SUBMIT_ANSWER_TOOL]
         self._event(ctx, "run_started", model_id=ctx.model_id, tool_design=req.tool_design, queue_ms=queue_ms,
                     mcp={"server_pid": getattr(client, "server_pid", None), "tools_discovered": [t["name"] for t in tools if t["name"] != "submit_answer"]})
+        if getattr(self.provider, "executes_loop", False):  # subscription execution: Claude Code drives the loop
+            await self.provider.run(self, ctx, client, tools)
+            return
         ctx.prefix_tokens = await self._prefix_tokens(ctx, tools)
         messages: list[dict] = [{"role": "user", "content": task_message(req.task, req.snapshot_ids, req.require_complete_results, req.max_cost_usd, req.deadline_seconds)}]
         provider_model = ctx.model_id.split(":", 1)[1] if ctx.model_id.startswith("fake:") else ctx.model_id
@@ -499,35 +503,10 @@ class RunEngine:
                     continue
                 if await self._stop_before_work(ctx):
                     return
-                tt0 = time.monotonic()
                 args = dict(u.get("input") or {})
-                try:
-                    out = await client.call(u["name"], args, timeout=max(0.1, min(S.tool_timeout_seconds, ctx.remaining())))
-                except Exception as e:
-                    out = {"error": {"code": "tool_failure", "message": f"{type(e).__name__}: {str(e)[:200]}"}}
-                if not isinstance(out, dict):
-                    out = {"error": {"code": "tool_failure", "message": "tool returned a non-object result"}}
-                if await self._stop_before_work(ctx):
+                text, err = await self._exec_tool(ctx, client, u["name"], args)
+                if text is None:
                     return
-                text, ids = ctx.ev.register(u["name"], args, out, req.tool_design, ctx.step)
-                self.store.save_evidence(rec["run_id"], [ctx.ev.get(eid).durable() for eid in ids])
-                err = (out.get("error") or {}).get("code") if "error" in out else None
-                if err:
-                    ctx.tool_error_streak += 1
-                    ctx.max_tool_error_streak = max(ctx.max_tool_error_streak, ctx.tool_error_streak)
-                else:
-                    ctx.tool_error_streak = 0
-                call = {"step": ctx.step, "tool": u["name"], "args": args, "evidence_ids": ids, "chars": len(text), "error_code": err,
-                        "duration_ms": int((time.monotonic() - tt0) * 1000)}
-                if u["name"] == "search_job_postings" and not err:
-                    call.update({"mode": out.get("mode", "records"), "total_count": out.get("total_count"), "returned": out.get("returned"),
-                                 "offset": out.get("offset"), "has_next": bool(out.get("next_cursor"))})
-                    if out.get("mode") == "counts":
-                        call.update({"raw": (out.get("counts") or {}).get("raw"), "distinct": (out.get("counts") or {}).get("distinct")})
-                    elif out.get("mode") == "duplicate_groups":
-                        call["total_groups"] = out.get("total_groups")
-                ctx.tool_calls.append(call)
-                self._event(ctx, "tool_call", **call)
                 results.append({"type": "tool_result", "tool_use_id": u["id"], "content": text, **({"is_error": True} if err else {})})
 
             if submit is not None:
@@ -585,6 +564,41 @@ class RunEngine:
             return
 
         await self._end(ctx, "incomplete", "stalled_execution", f"{S.max_steps} model requests without a validated answer.", client)
+
+    async def _exec_tool(self, ctx: RunContext, client: Any, name: str, args: dict) -> tuple[str | None, str | None]:
+        """Run one data tool, register its evidence and trace it. Returns (delivered text, error code); (None, None) if the run ended."""
+        S = self.settings
+        req = ctx.request
+        rec = ctx.record
+        tt0 = time.monotonic()
+        try:
+            out = await client.call(name, args, timeout=max(0.1, min(S.tool_timeout_seconds, ctx.remaining())))
+        except Exception as e:
+            out = {"error": {"code": "tool_failure", "message": f"{type(e).__name__}: {str(e)[:200]}"}}
+        if not isinstance(out, dict):
+            out = {"error": {"code": "tool_failure", "message": "tool returned a non-object result"}}
+        if await self._stop_before_work(ctx):
+            return None, None
+        text, ids = ctx.ev.register(name, args, out, req.tool_design, ctx.step)
+        self.store.save_evidence(rec["run_id"], [ctx.ev.get(eid).durable() for eid in ids])
+        err = (out.get("error") or {}).get("code") if "error" in out else None
+        if err:
+            ctx.tool_error_streak += 1
+            ctx.max_tool_error_streak = max(ctx.max_tool_error_streak, ctx.tool_error_streak)
+        else:
+            ctx.tool_error_streak = 0
+        call = {"step": ctx.step, "tool": name, "args": args, "evidence_ids": ids, "chars": len(text), "error_code": err,
+                "duration_ms": int((time.monotonic() - tt0) * 1000)}
+        if name == "search_job_postings" and not err:
+            call.update({"mode": out.get("mode", "records"), "total_count": out.get("total_count"), "returned": out.get("returned"),
+                         "offset": out.get("offset"), "has_next": bool(out.get("next_cursor"))})
+            if out.get("mode") == "counts":
+                call.update({"raw": (out.get("counts") or {}).get("raw"), "distinct": (out.get("counts") or {}).get("distinct")})
+            elif out.get("mode") == "duplicate_groups":
+                call["total_groups"] = out.get("total_groups")
+        ctx.tool_calls.append(call)
+        self._event(ctx, "tool_call", **call)
+        return text, err
 
     # ── helpers ────────────────────────────────────────────────────────────────
     async def _prefix_tokens(self, ctx: RunContext, tools: list[dict]) -> int | None:

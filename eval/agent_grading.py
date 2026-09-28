@@ -4,6 +4,8 @@ from pathlib import Path
 from eval.final_grade import grade_final,review_context,criteria,digest,packet,FINAL_IDS
 VERSION='dual-agent-human-audit-v1'
 REVIEWERS=('reviewer-a','reviewer-b')
+DISCLOSURE=('Two fresh Claude Code subagent contexts (reviewer-a Claude Opus 5.5, reviewer-b Claude Fable 5.1); different models from one vendor, so errors may be correlated. '
+            'Model/configuration/cost metadata hidden, but tool response shape can reveal design. Human audit is not full human grading.')
 
 def valid_agent(rec,key,d,reviewer):
     ids={c['id'] for c in criteria(key)}
@@ -69,5 +71,5 @@ def apply(folder,keys):
             item=packet(r,keys[r['task_id']]);item['review_reasons']=reasons[rid];queue.append(item)
     status={'method':VERSION,'sample_ids':sorted(sample_ids(records)),'expanded_tasks':expanded,'human_queue':sorted(queue,key=lambda p:p['review_id']),
             'agent_review_count':{w:len(d) for w,d in reviews.items()},'all_runs_terminal':len(records)==132 and all(r['state'] in {'completed','incomplete','failed','cancelled'} for r in records),
-            'disclosure':'Two fresh Codex agents, separate contexts, same model family; errors may be correlated. Model/configuration/cost metadata hidden, but tool response shape can reveal design. Human audit is not full human grading.'}
+            'disclosure':DISCLOSURE}
     return grades,status

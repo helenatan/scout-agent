@@ -203,6 +203,9 @@ def main() -> None:
             contrast['label']='suggestive'
             contrast['qualification_note']='Pass difference excludes zero, but both conditions do not meet qualification rules.'
 
+    notional = manifest.get("provider") == "claude-code-cli"
+    cost_basis = ("notional: rate card " + str((manifest.get("settings") or {}).get("rate_card_version")) + " applied to token usage reported by Claude Code under a subscription; not billed charges"
+                  if notional else "Anthropic API list-price ledger from reported usage per request")
     qualifying = [c for c, s in configurations.items() if s["qualifies"] and s["cost_per_success_usd"] is not None]
     if qualifying:
         lead = min(qualifying, key=lambda c: configurations[c]["cost_per_success_usd"])
@@ -218,7 +221,7 @@ def main() -> None:
             conf = "suggestive"
         else:
             conf = "inconclusive"
-        text = (f"{lead} ({CONFIGS[lead][0]} + {CONFIGS[lead][1]} tools) is the lowest-cost qualifying option at {s['cost_per_success_usd']:.3f} USD per successful answer "
+        text = (f"{lead} ({CONFIGS[lead][0]} + {CONFIGS[lead][1]} tools) is the lowest-cost qualifying option at {s['cost_per_success_usd']:.3f} {'notional ' if notional else ''}USD per successful answer "
                 f"({s['passes']}/{s['launched']} runs passed on {s['tasks']} tasks). " +
                 (", ".join(f"{sv:.0%} cheaper than {c}" for c, sv in savings.items()) + ". " if savings else "No other configuration qualifies. ") +
                 "This is a small controlled case study on the PAI task suite, not a production reliability estimate.")
@@ -250,7 +253,8 @@ def main() -> None:
     report = {
         "meta": {"title": a.title or f"{a.label} ({a.kind})", "kind": a.kind, "label": a.label, "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                  "suite_version": manifest.get("suite_version", "unknown"), "n_tasks": len(tasks), "reps": max((len(v) for t in by.values() for v in t.values()), default=0),
-                 "provisional": provisional, "launches_unresolved": launches_unresolved,
+                 "provisional": provisional, "launches_unresolved": launches_unresolved, "cost_basis": cost_basis,
+                 "provider": manifest.get("provider"), "superseded_runs": len(manifest.get("superseded_runs", [])),
                  "success_rate_basis": "confirmed passes / all launched runs; pending grades remain unresolved",
                  "notes": a.note + manifest.get("notes", []), "qualification": {"quality_floor": a.floor, "time_target_s": a.time_target, "rule": a.rule,
                                                                              "source": manifest.get("qualification_source", "placeholder pending developer interviews")}},

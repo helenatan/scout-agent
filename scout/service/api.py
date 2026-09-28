@@ -71,6 +71,10 @@ def build_app(store: Store | None = None, provider=None, tool_client_factory=Non
         if prov is None:
             if os.environ.get("SCOUT_PROVIDER", "anthropic") == "fake":
                 prov = DemoFakeProvider()
+            elif os.environ.get("SCOUT_PROVIDER") == "claude-code":
+                from scout.service.claude_code import ClaudeCodeExecutor
+
+                prov = ClaudeCodeExecutor(cli=os.environ.get("SCOUT_CLAUDE_CLI"))
             else:
                 prov = AnthropicProvider(api_key=_api_key(), timeout=(settings or Settings()).request_timeout_seconds)
         factory = tool_client_factory
@@ -88,7 +92,7 @@ def build_app(store: Store | None = None, provider=None, tool_client_factory=Non
     @app.get("/healthz")
     async def healthz():
         return {"ok": True, "provider": state["provider_name"], "tool_transport": state["transport"], "rate_card": B.RATE_CARD_VERSION,
-                "spend": {**state["store"].spend_summary(), "cap_usd": engine().spend_cap_usd}, "settings": engine().settings.public("haiku", state["provider_name"])}
+                "spend": {**state["store"].spend_summary(), "cap_usd": engine().spend_cap_usd}, "settings": _health_settings(engine())}
 
     @app.post("/v1/runs", status_code=202)
     async def submit_run(request: Request, idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
@@ -181,6 +185,14 @@ def build_app(store: Store | None = None, provider=None, tool_client_factory=Non
     if UI_DIR.exists():
         app.mount("/ui", StaticFiles(directory=str(UI_DIR)), name="ui")
     return app
+
+
+def _health_settings(eng: RunEngine) -> dict:
+    out = eng.settings.public("haiku", getattr(eng.provider, "name", "anthropic"))
+    if getattr(eng.provider, "executes_loop", False):
+        out["execution"] = {m: eng.provider.public(m) for m in ("haiku", "opus")}
+        out["prompt_caching"] = "managed by Claude Code"
+    return out
 
 
 def _submit_view(rec: dict, replay: bool = False) -> dict:
