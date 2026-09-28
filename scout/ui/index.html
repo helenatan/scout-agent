@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scout Agent · Submit a run</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <a class="brand" href="index.html">Scout Agent</a>
+  <nav><a href="index.html" class="active">Submit</a><a href="run.html">Run detail</a><a href="compare.html">Compare configurations</a></nav>
+</header>
+<main>
+  <section>
+    <h1>Submit a PAI research question</h1>
+    <p class="note">A snapshot holds postings <b>first captured</b> in its window from jsearch, greenhouse, and ashby, not every job live on a date. Counts describe captured postings, not the market. Development examples: <code>pai-2026-07</code>, <code>pai-2026-08</code>, <code>pai-w-2026-07-20</code>, <code>pai-w-2026-08-10</code>.</p>
+    <form id="f">
+      <label>Question<textarea name="task" rows="4" required>In snapshot pai-2026-08, how many raw posting records are there for Anthropic and how many distinct openings do they represent under the published identity rule? List the duplicate groups and explain any coverage limitation.</textarea></label>
+      <div class="row">
+        <label>Snapshot IDs (comma-separated)<input name="snapshot_ids" value="pai-2026-08" required></label>
+        <label>Model<select name="model"><option value="haiku">haiku (claude-haiku-4-5-20251001)</option><option value="opus">opus (claude-opus-5)</option></select></label>
+        <label>Tool design<select name="tool_design"><option value="baseline">baseline</option><option value="redesigned">redesigned</option></select></label>
+      </div>
+      <div class="row">
+        <label>Budget (USD)<input name="max_cost_usd" type="number" step="0.01" min="0.01" max="5" value="0.50"></label>
+        <label>Deadline (seconds)<input name="deadline_seconds" type="number" min="10" max="1800" value="300"></label>
+        <label class="check"><input name="require_complete_results" type="checkbox" checked> Require complete results (every page of supporting list queries)</label>
+      </div>
+      <button type="submit">Submit run</button> <span id="msg" class="muted"></span>
+    </form>
+    <p class="muted" id="health"></p>
+  </section>
+  <section>
+    <h2>Recent runs</h2>
+    <table><thead><tr><th>run</th><th>state</th><th>model / tools</th><th>task</th><th>cost</th><th>time</th></tr></thead><tbody id="runs"></tbody></table>
+  </section>
+</main>
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+document.getElementById('f').onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const body = {task: fd.get('task'), snapshot_ids: fd.get('snapshot_ids').split(',').map(s => s.trim()).filter(Boolean),
+    model: fd.get('model'), tool_design: fd.get('tool_design'), max_cost_usd: Number(fd.get('max_cost_usd')),
+    deadline_seconds: Number(fd.get('deadline_seconds')), require_complete_results: fd.get('require_complete_results') === 'on'};
+  const r = await fetch('/v1/runs', {method: 'POST', headers: {'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID()}, body: JSON.stringify(body)});
+  const j = await r.json();
+  if (r.status === 202 || r.status === 200) location.href = `run.html?id=${j.run_id}`;
+  else document.getElementById('msg').textContent = `${r.status}: ${JSON.stringify(j.detail)}`;
+};
+(async () => {
+  const h = await (await fetch('/healthz')).json();
+  document.getElementById('health').textContent = `provider ${h.provider} · tools over ${h.tool_transport} · spend ${h.spend.confirmed_usd.toFixed(4)} of cap $${h.spend.cap_usd.toFixed(2)} (${h.spend.runs} runs)` + (h.provider === 'fake' ? ' · FAKE provider: scripted demo answers, no real model' : '');
+  const runs = (await (await fetch('/v1/runs?limit=30')).json()).runs;
+  document.getElementById('runs').innerHTML = runs.map(r => `<tr><td><a href="run.html?id=${r.run_id}">${r.run_id}</a></td><td><span class="badge st-${r.state}">${r.state}</span></td><td>${esc(r.model)} / ${r.tool_design}</td><td>${esc(r.task)}</td><td>${r.cost ? '$'+Number(r.cost.usd).toFixed(4) + (r.cost.settled ? '' : ' (not final)') : ''}</td><td>${r.duration_seconds ?? ''}</td></tr>`).join('') || '<tr><td colspan=6 class="muted">none yet</td></tr>';
+})();
+</script>
+</body>
+</html>

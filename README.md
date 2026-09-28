@@ -1,1 +1,38 @@
-# scout-agent
+# Scout · Agent Tool Study
+
+A controlled case study of how data-tool design changes a research agent's accuracy, cost and speed. The same tasks are run with Haiku and Opus, each with baseline and redesigned tools.
+
+The site in `site/` is a static demonstration and saved-results viewer, prepared for deployment. This repository is currently private. It makes no paid model calls. The code includes the local HTTP service, MCP tools, budget enforcement, evidence validation and evaluation harness.
+
+## Run the demonstration
+
+Python 3.13 was used for the experiment.
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.lock
+.venv/bin/python scripts/create_demo_data.py
+SCOUT_PROVIDER=fake .venv/bin/uvicorn scout.service.api:app --host 127.0.0.1 --port 8000
+```
+
+Open http://127.0.0.1:8000/ui/index.html. The fake provider is scripted; it does not measure model capability. Use snapshot `pai-2026-08` to explore the synthetic data. For live local runs, provide `ANTHROPIC_API_KEY` and set `SCOUT_PROVIDER=anthropic`. The default service spending cap is $5. Do not expose this research service publicly: it has no public user authentication or per-user billing.
+
+## What changes between tool designs?
+
+Both designs expose the same frozen records and identity fields. Baseline returns paginated records, full posting text, and a separate context tool. Redesigned tools additionally calculate counts and duplicate groups, attach collection context, and offer exact text sections or excerpts. The agent still selects its cohort and interprets qualifications.
+
+A distinct captured opening is the pair `(company_normalized, lower(trim(title)))`, under SQLite's ASCII normalization. This is a counting convention, not proof that identical titles describe the same real vacancy. Counts reflect first-captured postings, not market demand or currently open positions.
+
+## Reproducibility and limits
+
+The original third-party job-description database, private keys, raw answer traces and review journals are not distributed. The synthetic fixture exercises the software; it cannot reproduce the research's numerical findings. Public results must be read with their development/final status and grading disclosures. The site never labels development results as final evidence.
+
+Developer interviews were deferred for this research/demo release. The 80% quality floor, 300-second median time target, 15-point non-inferiority margin and 20% cost-saving target are owner-chosen assumptions, not validated user requirements. The planned final study has 11 tasks, four conditions and three repetitions (132 attempts); uncertainty is estimated by resampling whole tasks with paired conditions. A small case study cannot establish production reliability.
+
+## Verification
+
+```sh
+.venv/bin/python -m pytest tests/test_final_grading.py -q
+```
+
+Research tests requiring the private original dataset are not included in the public CI check. See `docs/release-status.md` and the saved results for the exact completion state.

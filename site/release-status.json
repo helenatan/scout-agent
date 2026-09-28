@@ -1,0 +1,14 @@
+{
+  "status": "in_progress",
+  "final_runs_launched": 0,
+  "publication": "private GitHub repository: helenatan/scout-agent",
+  "independent_baseline_review": "agent inspection complete; limitations disclosed",
+  "final_grading": "method decision pending",
+  "developer_interviews": "deferred",
+  "development_rehearsal": {
+    "attempts": 32,
+    "automatic_passes": 27,
+    "settled_usd": 2.445409
+  },
+  "public_site": "not deployed"
+}

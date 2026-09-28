@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scout Agent · Run detail</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <a class="brand" href="index.html">Scout Agent</a>
+  <nav><a href="index.html">Submit</a><a href="run.html" class="active">Run detail</a><a href="compare.html">Compare configurations</a></nav>
+</header>
+<main id="app">
+  <p class="muted">Loading run…</p>
+</main>
+<script>
+const id = new URLSearchParams(location.search).get('id');
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const usd = x => x == null ? '—' : '$' + Number(x).toFixed(4);
+const TERMINAL = new Set(['completed','incomplete','cancelled','failed']);
+let evidenceById = {};
+
+function stateBadge(s) { return `<span class="badge st-${s}">${s}</span>`; }
+
+function findingHtml(f) {
+  const ids = (f.evidence_ids||[]).map(e => `<a class="chip" href="#${e}" title="${esc(evidenceById[e]?.source_type||'')}">${e}</a>`).join(' ');
+  const calc = f.calculation ? `<div class="calc">calculation: ${f.calculation.operands[0]} − ${f.calculation.operands[1]} = <b>${f.calculation.result}</b></div>` : '';
+  return `<li><div>${esc(f.statement)}</div>${calc}<div class="chips">${ids}</div></li>`;
+}
+
+function render(r, ev) {
+  evidenceById = Object.fromEntries((r.evidence||[]).map(e => [e.id, e]));
+  const a = r.answer || {summary:null, findings:[], limitations:[]};
+  const cost = r.cost || {};
+  const u = r.usage || {};
+  const bm = Object.entries(u.by_model||{});
+  const tokens = bm.map(([m,v]) => `<tr><td>${esc(m)}</td><td>${v.input_tokens}</td><td>${v.cache_read_tokens}</td><td>${v.cache_creation_tokens}</td><td>${v.output_tokens}</td></tr>`).join('');
+  const inflight = r.state==='running' || r.state==='cancelling';
+  const costLabel = cost.settled ? '' : ` <span class="warn">not final: ${cost.unsettled_requests} request charge(s) unknown</span>`;
+  const outcome = r.outcome ? `<div class="outcome"><b>${esc(r.outcome.reason)}</b>${r.outcome.detail ? ' — ' + esc(r.outcome.detail) : ''}</div>` : '';
+  const evList = (r.evidence||[]).map(e => `<li id="${e.id}"><code>${e.id}</code> <span class="muted">${e.source_type}</span> · ${esc(e.snapshot_id)}${e.posting_id ? ' · posting <code>'+esc(e.posting_id)+'</code>' : ''}${e.quote ? `<blockquote>${esc(e.quote)}</blockquote>` : ''}</li>`).join('');
+  const events = (ev.events||[]).map(e => `<tr><td>${e.seq}</td><td>${(e.t_ms/1000).toFixed(1)}s</td><td>${e.step}</td><td><b>${e.event}</b></td><td class="mono">${esc(summ(e))}</td></tr>`).join('');
+  const reqs = (ev.requests||[]).map(q => `<tr><td>${q.request_id}</td><td>${q.purpose}</td><td>${q.usage? q.usage.input_tokens : '—'}</td><td>${q.usage? q.usage.cache_read_tokens : '—'}</td><td>${q.usage? q.usage.cache_creation_tokens : '—'}</td><td>${q.usage? q.usage.output_tokens : '—'}</td><td>${q.stop_reason||''}</td><td>${usd(q.reserved_usd)}</td><td>${q.settled ? usd(q.usd) : '<span class="warn">unsettled</span>'}</td><td>${q.duration_ms!=null ? (q.duration_ms/1000).toFixed(1)+'s' : ''}</td></tr>`).join('');
+  const tools = ((r.trace||{}).tool_calls||[]).map(t => `<tr><td>${t.step}</td><td>${t.tool}</td><td class="mono">${esc(JSON.stringify(t.args))}</td><td>${(t.evidence_ids||[]).join(', ')}</td><td>${t.error_code||''}</td><td>${t.chars}</td></tr>`).join('');
+  const tp = r.token_profile || {};
+  $('#app').innerHTML = `
+  <section class="head">
+    <h1>Run <code>${r.run_id}</code> ${stateBadge(r.state)}</h1>
+    <div class="task">${esc(r.request.task)}</div>
+    <div class="meta">${esc(r.request.snapshot_ids.join(', '))} · ${r.request.model} / ${r.request.tool_design} · budget ${usd(r.request.max_cost_usd)} · deadline ${r.request.deadline_seconds}s · complete results ${r.request.require_complete_results ? 'required' : 'not required'}</div>
+    ${inflight ? `<button id="cancel">Cancel run</button>` : ''}
+    ${outcome}
+  </section>
+  <section>
+    <h2>Answer</h2>
+    ${a.summary ? `<p class="summary">${esc(a.summary)}</p>` : `<p class="muted">${TERMINAL.has(r.state) ? 'No summary was produced.' : 'No answer yet.'}</p>`}
+    ${r.state==='completed' ? '<p class="note">Completed means the runtime checks passed. Correctness is established only by offline grading.</p>' : ''}
+    <h3>Findings</h3>
+    ${a.findings.length ? `<ol class="findings">${a.findings.map(findingHtml).join('')}</ol>` : '<p class="muted">None.</p>'}
+    <h3>Limitations</h3>
+    ${a.limitations.length ? `<ul>${a.limitations.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : '<p class="muted">None stated.</p>'}
+    <h3>Evidence</h3>
+    ${evList ? `<ul class="evidence">${evList}</ul>` : '<p class="muted">No evidence cited.</p>'}
+  </section>
+  <section class="grid">
+    <div class="card"><h2>Cost</h2><div class="big">${usd(cost.usd)}</div><div class="muted">rate card ${esc(cost.rate_card_version)}${cost.includes_in_flight ? ' · includes an in-flight request' : ''}${costLabel}</div></div>
+    <div class="card"><h2>Time</h2><div class="big">${r.duration_seconds != null ? r.duration_seconds + 's' : '…'}</div><div class="muted">from acceptance ${esc(r.created_at)} to terminal state</div></div>
+    <div class="card"><h2>Requests</h2><div class="big">${u.requests||0}</div><div class="muted">repair ${r.repair?.attempted ? r.repair.outcome || 'in progress' : 'not needed'}</div></div>
+    <div class="card"><h2>Configuration</h2><div><b>${esc(r.model)}</b></div><div>${r.tool_design} tools · prompt ${esc(r.settings?.prompt_version)} · validator ${esc(r.settings?.validator_version)} · tools ${esc(r.settings?.tool_version)}</div><div class="muted">provider ${esc(r.settings?.provider)} · MCP ${esc(r.settings?.mcp_transport)} · max output ${r.settings?.max_output_tokens}</div></div>
+  </section>
+  <section>
+    <h2>Tokens</h2>
+    <table><thead><tr><th>model</th><th>input</th><th>cache read</th><th>cache write</th><th>output</th></tr></thead><tbody>${tokens || '<tr><td colspan=5 class="muted">no usage yet</td></tr>'}</tbody></table>
+    <div class="muted">cumulative input ${u.cumulative_input_tokens||0} · largest request ${u.peak_request_input_tokens||0} · repeated conversation content ≈ ${tp.repeated_conversation_content ?? '—'} (estimate) · tool definitions and instructions ${tp.tool_definitions_and_instructions ?? 'unknown'} · unique evidence ${tp.unique_evidence_chars ?? 0} chars</div>
+  </section>
+  <details><summary>Request history (${(ev.requests||[]).length})</summary>
+    <table><thead><tr><th>id</th><th>purpose</th><th>input</th><th>cache read</th><th>cache write</th><th>output</th><th>stop</th><th>reserved</th><th>cost</th><th>time</th></tr></thead><tbody>${reqs}</tbody></table>
+  </details>
+  <details><summary>Tool calls (${((r.trace||{}).tool_calls||[]).length})</summary>
+    <table><thead><tr><th>step</th><th>tool</th><th>args</th><th>evidence</th><th>error</th><th>chars</th></tr></thead><tbody>${tools}</tbody></table>
+  </details>
+  <details><summary>Event log (${(ev.events||[]).length})</summary>
+    <table><thead><tr><th>#</th><th>t</th><th>step</th><th>event</th><th>detail</th></tr></thead><tbody>${events}</tbody></table>
+  </details>
+  <details><summary>Raw record</summary><pre>${esc(JSON.stringify(r, null, 1))}</pre></details>`;
+  const c = $('#cancel');
+  if (c) c.onclick = async () => { c.disabled = true; await fetch(`/v1/runs/${id}/cancel`, {method:'POST'}); tick(); };
+}
+function summ(e) { const o = {...e}; ['seq','ts','t_ms','step','event'].forEach(k => delete o[k]); const s = JSON.stringify(o); return s.length > 160 ? s.slice(0,160)+'…' : s; }
+async function tick() {
+  if (!id) { $('#app').innerHTML = '<p>No run id. <a href="index.html">Submit a run</a>.</p>'; return; }
+  const r = await fetch(`/v1/runs/${id}`); if (!r.ok) { $('#app').innerHTML = `<p>Run not found.</p>`; return; }
+  const rec = await r.json(); const ev = await (await fetch(`/v1/runs/${id}/events`)).json();
+  render(rec, ev);
+  if (!TERMINAL.has(rec.state) || !rec.cost.settled) setTimeout(tick, 1500);
+}
+tick();
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+name: Public package checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r requirements.lock
+      - run: python -m pytest tests -q
+      - run: python scripts/create_demo_data.py
+      - name: Verify fictional counts
+        run: |
+          python - <<'PY'
+          from scout.tools.pai_tools import PAIData, execute_tool
+          response = execute_tool(PAIData(), 'redesigned', 'search_job_postings', {'snapshot_id':'pai-2026-08','mode':'counts'})
+          assert response['counts'] == {'raw':3,'distinct':2}
+          PY
