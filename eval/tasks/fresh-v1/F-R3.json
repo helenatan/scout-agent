@@ -1,0 +1,17 @@
+{
+  "id": "F-R3",
+  "suite_version": "fresh-v1-draft",
+  "group": "R",
+  "blueprint": "F-R3",
+  "request": {
+    "task": "How did Thermo Fisher's captured PM postings (company filter 'Thermo Fisher') change between pai-w-2026-07-20 and pai-w-2026-08-17? For each week report raw records and distinct openings under the published identity rule, give the absolute change in both measures, and say which titles account for the difference.",
+    "snapshot_ids": [
+      "pai-w-2026-07-20",
+      "pai-w-2026-08-17"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

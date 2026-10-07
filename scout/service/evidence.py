@@ -97,7 +97,7 @@ class EvidenceStore:
             eid = self._next()
             ctx_text = ""
             ctx_key = "collection_context" if isinstance(out.get("collection_context"), dict) else "coverage"
-            if design == "redesigned" and isinstance(out.get(ctx_key), dict):
+            if design in ("redesigned", "tuned", "dated", "v5") and isinstance(out.get(ctx_key), dict):
                 ctx_id = self._next()
                 out[ctx_key] = {"evidence_id": ctx_id, **out[ctx_key]}
                 ctx_text = json.dumps(out[ctx_key], ensure_ascii=False)

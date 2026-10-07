@@ -1,6 +1,6 @@
 """Local stdio MCP server exposing the three PAI data tools.
 
-    python -m scout.tools.mcp_server --design baseline|redesigned [--db PATH] [--delay SECONDS]
+    python -m scout.tools.mcp_server --design baseline|redesigned|tuned|dated|v5 [--db PATH] [--delay SECONDS]
 
 Tool names, descriptions and input schemas are exactly `tool_definitions(design)`, so a
 direct `execute_tool` call and an MCP call share one schema. Results: one TextContent with

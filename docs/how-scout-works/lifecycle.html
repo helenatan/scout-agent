@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scout run lifecycle</title>
+<style>
+:root{--bg:#fff;--fg:#242831;--muted:#636d7d;--line:#dce1e8;--wash:#f6f7fa;--accent:#5146bf;--active:#f0eefa;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#191b1f;--fg:#eef0f5;--muted:#a6afbe;--line:#3c424d;--wash:#22262c;--accent:#b6aeff;--active:#302d43;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#191b1f;--fg:#eef0f5;--muted:#a6afbe;--line:#3c424d;--wash:#22262c;--accent:#b6aeff;--active:#302d43;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;padding:38px 24px 60px;background:var(--bg);color:var(--fg);font:14px/1.6 -apple-system,system-ui,"Segoe UI",sans-serif}main{max-width:980px;margin:auto}h1,h2,h3,p{margin:0}h1{font-size:32px;line-height:1.2;letter-spacing:-.8px;font-weight:600;max-width:680px}h2{font-size:23px;line-height:1.3;font-weight:580;letter-spacing:-.4px}h3{font-size:14px;font-weight:600}a{color:var(--accent);text-underline-offset:3px}button,select{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.4}button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}code{font: .9em var(--mono);overflow-wrap:anywhere}.eyebrow{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}.lede{margin-top:14px;max-width:73ch;font-size:16px;color:var(--muted)}.overview{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:23px 0;color:var(--muted);font-size:13px}.overview b{color:var(--fg);font-weight:550}.question{padding:16px 20px;background:var(--wash);border-left:3px solid var(--line);margin-top:28px}.question .eyebrow{margin-bottom:5px}.question p{font-size:16px}.question small{display:block;margin-top:5px;color:var(--muted);font-size:11px}.walkthrough{margin-top:28px;border:1px solid var(--line);border-radius:12px;overflow:hidden}.walk-top{display:flex;justify-content:space-between;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}.walk-top .label{font-size:12px;font-weight:600}.scenarios{display:flex;gap:6px;flex-wrap:wrap}.scenario{border:1px solid var(--line);border-radius:20px;background:var(--bg);color:var(--muted);padding:5px 12px;font-size:12px}.scenario[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--active)}.walk-grid{display:grid;grid-template-columns:240px 1fr;min-height:445px}.timeline{list-style:none;margin:0;padding:23px 16px;border-right:1px solid var(--line)}.timeline li{position:relative;margin:0 0 10px}.timeline li:not(:last-child):after{content:'';position:absolute;left:24px;top:42px;height:22px;width:1px;background:var(--line)}.step-link{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:7px;background:none;color:var(--muted);padding:9px 10px;font-size:13px;position:relative;z-index:1}.step-link[aria-current="step"]{background:var(--active);color:var(--accent);font-weight:600}.step-number{width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:var(--bg);font:11px var(--mono);flex-shrink:0}.step-link[aria-current="step"] .step-number{border-color:var(--accent)}.detail{padding:29px 30px 24px;min-width:0}.detail .counter{font:11px var(--mono);color:var(--muted);margin-bottom:12px}.detail .explain{font-size:15px;line-height:1.65;margin-top:14px;max-width:65ch}.example{margin-top:20px;padding:16px 18px;border:1px solid var(--line);border-radius:6px;background:var(--wash)}.example-label{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}.example ul{margin:0;padding-left:18px}.example li+li{margin-top:5px}.meaning{margin-top:18px;color:var(--muted);font-size:13px;max-width:70ch}.meaning strong{color:var(--fg);font-weight:550}.next-reason{margin-top:20px;padding-top:15px;border-top:1px solid var(--line);font-size:13px}.next-reason span{color:var(--muted);margin-right:5px}.controls{display:flex;justify-content:space-between;align-items:center;gap:14px;border-top:1px solid var(--line);padding:15px 20px}.controls button{padding:9px 15px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font-size:12px}.controls .next{background:var(--accent);color:var(--bg);border-color:var(--accent)}.progress-text{color:var(--muted);font-size:12px}.read-all{margin-top:12px;text-align:right}.read-all button{background:none;border:0;color:var(--accent);font-size:12px;text-decoration:underline;text-underline-offset:3px}.full-story{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:25px}.full-story article+article{margin-top:23px;padding-top:23px;border-top:1px solid var(--line)}.full-story h3{font-size:16px;margin-bottom:8px}.full-story p{max-width:82ch}.reference{margin-top:40px}.reference>p{color:var(--muted);margin-top:8px;max-width:78ch}details{margin-top:14px;border-top:1px solid var(--line);padding-top:13px}summary{cursor:pointer;font-size:13px;font-weight:550}.table-scroll{overflow-x:auto}table{width:100%;font-size:12px;border-collapse:collapse;margin-top:12px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:10px 14px 10px 0;min-width:105px}th{font-weight:600}caption{text-align:left;padding:10px 0;font-weight:550}.note{margin-top:10px;font-size:12px;color:var(--muted)}footer{border-top:1px solid var(--line);margin-top:40px;padding-top:18px;color:var(--muted);font-size:12px}.noscript{margin:20px 0;padding:15px;background:var(--wash)}@media(max-width:700px){body{padding:24px 16px 44px}h1{font-size:27px}.walk-grid{grid-template-columns:1fr}.timeline{display:flex;overflow-x:auto;gap:6px;border-right:0;border-bottom:1px solid var(--line);padding:12px}.timeline li{flex:0 0 auto;margin:0}.timeline li:after{display:none}.step-link{font-size:12px;gap:6px;padding:6px}.step-number{width:23px;height:23px}.detail{padding:24px 20px}.walk-top{padding:15px}.progress-text{display:none}.controls{padding:13px 15px}.overview{gap:8px;font-size:12px}.full-story{padding:20px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<p class="eyebrow">How Scout works / Run lifecycle</p>
+<nav aria-label="Lifecycle views" style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:22px;font-size:12px"><a href="index.html">Architecture</a><span aria-current="page">Run lifecycle</span></nav>
+<h1>From your question to a checked answer</h1>
+<p class="lede">Scout asks the model what to investigate, uses tools to gather evidence, and checks the proposed answer before returning it. The same budget and deadline apply throughout.</p>
+<div class="overview" aria-label="Lifecycle overview"><b>You ask</b><span aria-hidden="true">→</span><b>Scout gathers evidence</b><span aria-hidden="true">→</span><b>Scout checks the answer</b><span aria-hidden="true">→</span><b>You get the result</b></div>
+</header>
+<div class="question"><p class="eyebrow">Follow this example</p><p>“How many captured PM openings mention ‘agent’ in this collection window?”</p><small>Illustrative walkthrough. These controls explain the lifecycle; they do not launch a run or spend money.</small></div>
+<section class="walkthrough" aria-label="Guided lifecycle walkthrough">
+<div class="walk-top"><span class="label">Follow one run</span><div class="scenarios" role="group" aria-label="Choose a path">
+<button class="scenario" data-scenario="normal" aria-pressed="true">Normal run</button><button class="scenario" data-scenario="repair" aria-pressed="false">Needs a repair</button><button class="scenario" data-scenario="cancel" aria-pressed="false">You cancel</button><button class="scenario" data-scenario="limit" aria-pressed="false">Time runs out</button>
+</div></div>
+<div class="walk-grid"><ol class="timeline" id="timeline" aria-label="Steps in this run"></ol>
+<div class="detail" id="current-step" role="region" aria-label="Current walkthrough step" aria-live="polite" aria-atomic="true"></div></div>
+<div class="controls"><button id="previous" type="button">← Previous</button><span class="progress-text" id="progress"></span><button id="next" type="button" class="next">Next: check the limits →</button></div>
+</section>
+<div class="read-all"><button id="read-all" type="button" aria-expanded="false" aria-controls="full-story">Read this whole path at once</button></div>
+<section class="full-story" id="full-story" hidden aria-label="All steps in the selected path"></section>
+<noscript><style>.walkthrough,.read-all{display:none}</style><div class="noscript"><h2>The run, in order</h2><ol><li>Scout saves your question and gives you a run ID.</li><li>Before every model request, Scout estimates input size and checks cancellation, time, and budget.</li><li>The model requests data; tools return evidence. This repeats as needed, with a fresh limit check each time.</li><li>Scout validates the proposed answer. One repair is allowed under the same limits.</li><li>You receive the result, supporting evidence, and known cost. Unfinished runs can return partial findings; unknown billing stays unsettled.</li></ol></div></noscript>
+
+<section class="reference" aria-label="Technical reference">
+<h2>The details, when you need them</h2>
+<p>The walkthrough explains the order of events. These references give the exact conditions, run states, and event names without interrupting that story.</p>
+<details><summary>Which checks can stop a request?</summary><div class="table-scroll"><table class="small" aria-label="Admission decision outcomes">
+    <caption>What the admission decision means — applies to research, repair, and retry</caption>
+    <thead><tr><th>Decision</th><th>Condition</th><th>What happens next</th></tr></thead>
+    <tbody>
+      <tr><td><b>PASS</b></td><td>Run active, no cancel request, time remaining, input within ceiling, budget reservation fits.</td><td>Reserve budget and dispatch <code>messages.create</code> immediately. This permits one request; the next request needs a new decision.</td></tr>
+      <tr><td><b>STOP · already terminal</b></td><td>The run ended while estimation was awaited.</td><td>Exit without changing its existing state or answer. No request sent.</td></tr>
+      <tr><td><b>STOP · cancelled</b></td><td>Cancellation was requested before dispatch.</td><td>End <code>cancelled / cancel_requested</code> when no work is in flight. No request sent.</td></tr>
+      <tr><td><b>STOP · deadline</b></td><td>No time remains.</td><td>End <code>incomplete / deadline_exceeded</code>. No request sent.</td></tr>
+      <tr><td><b>STOP · input ceiling</b></td><td>Estimated input exceeds the configured ceiling.</td><td>End <code>incomplete / stalled_execution</code>, detail <code>input_ceiling</code>. No request sent.</td></tr>
+      <tr><td><b>STOP · budget</b></td><td>The required reservation does not fit the remaining budget.</td><td>End <code>incomplete / budget_exhausted</code>. No request sent.</td></tr>
+    </tbody>
+  </table></div></details>
+<details><summary>What does Cancel do in each state?</summary><div class="table-scroll"><table class="small">
+    <caption>What the cancel endpoint does, by the run’s state when the call arrives</caption>
+    <thead><tr><th>State at the time</th><th>Response</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr><td><code>queued</code></td><td><code>202</code></td><td><code>cancelled</code> immediately. No paid work was started.</td></tr>
+      <tr><td><code>running</code>, nothing in flight</td><td><code>202 · cancelling</code></td><td><code>cancelled</code> at the loop’s next check, before any further model request or tool call.</td></tr>
+      <tr><td><code>running</code>, model request in flight</td><td><code>202 · cancelling</code></td><td>Stays <code>cancelling</code> until that request returns or reaches the request timeout, then <code>cancelled</code>. The request is not aborted and may still be charged.</td></tr>
+      <tr><td>Already terminal</td><td><code>200</code></td><td>State unchanged, with <code>note: "already terminal"</code>.</td></tr>
+    </tbody>
+  </table></div></details>
+<details><summary>What happens when Scout stops the run?</summary><div class="table-scroll"><table class="small">
+    <caption>Stops that Scout initiates are not cancellation: they never end <code>cancelled</code></caption>
+    <thead><tr><th>What happened</th><th>Terminal state</th><th>Outcome reason</th></tr></thead>
+    <tbody>
+      <tr><td>A budget reservation does not fit</td><td><code>incomplete</code></td><td><code>budget_exhausted</code></td></tr>
+      <tr><td>The deadline expires, including while queued</td><td><code>incomplete</code></td><td><code>deadline_exceeded</code></td></tr>
+      <tr><td>The answer is still invalid after the one repair</td><td><code>incomplete</code></td><td><code>validation_failed</code></td></tr>
+      <tr><td>Repeated tool errors, stalled work, or the input ceiling</td><td><code>incomplete</code></td><td><code>stalled_execution</code></td></tr>
+      <tr><td>Provider, tool, or internal failure</td><td><code>failed</code></td><td><code>provider_error</code> · <code>tool_error</code> · <code>internal_error</code></td></tr>
+    </tbody>
+  </table></div></details>
+<details><summary>Which events are recorded?</summary><div class="table-scroll"><table class="small">
+    <thead><tr><th>Event</th><th>Recorded when</th></tr></thead>
+    <tbody>
+      <tr><td><code>run_started</code></td><td>The execution loop picks up a queued run.</td></tr>
+      <tr><td><code>model_request</code></td><td>Each Messages API request, after budget has been reserved for it.</td></tr>
+      <tr><td><code>tool_call</code></td><td>Each MCP tool call the loop executes for the model.</td></tr>
+      <tr><td><code>validation_failed</code></td><td>The runtime checks reject a submitted answer.</td></tr>
+      <tr><td><code>repair_attempted</code></td><td>The current engine records the repair outcome (<code>succeeded</code> or <code>failed</code>), not its start. A repair model request is recorded separately as <code>model_request</code> with its purpose.</td></tr>
+      <tr><td><code>budget_exhausted</code></td><td>A reservation does not fit the remaining budget, so the request is not sent.</td></tr>
+      <tr><td><code>cancel_requested</code></td><td>The cancel endpoint is called.</td></tr>
+      <tr><td><code>deadline_exceeded</code></td><td>The deadline expires, including while queued or with a request in flight.</td></tr>
+      <tr><td><code>cost_unsettled</code></td><td>A late failure leaves billing unknown; the reservation remains outstanding.</td></tr>
+      <tr><td><code>cost_settled</code></td><td>Late request usage is reconciled; run state and answer remain unchanged. Other requests may still be unsettled.</td></tr>
+      <tr><td><code>run_ended</code></td><td>The run reaches a terminal state.</td></tr>
+    </tbody>
+  </table></div></details>
+<details><summary>What does “completed” guarantee?</summary><p class="note">It means the runtime checks passed. Whether the answer is correct is decided by offline grading against an answer key. Each finding declares what it supports: a list of records (the default), a count, or posting text. A records finding must cite its records, with every page of the list read when the task requires complete results; a count may rest on a complete count result instead. The model declares the scope itself, so offline grading still checks that each claim matches it.</p></details>
+<details><summary>How are the components connected?</summary><p class="note">The browser submits a question to Scout’s HTTP API and polls the saved status and events. The execution loop calls the model provider and executes the model’s requests through the local MCP data tools. Scout owns admission, evidence persistence, answer checks, and billing. The model never directly reads the dataset. See the <a href="index.html">architecture</a> for the component map.</p><p class="note">In the study’s evaluations, model calls went through a headless Claude Code session on a subscription instead of the Messages API. Scout still owned the tools, evidence, answer checks, the one repair and the deadline. Token counting is not available on that path, so the budget and the input ceiling were checked on each request as its usage arrived, and costs are notional: list rates applied to reported tokens.</p></details>
+<p class="note">At running-state checks, an expired deadline takes precedence if cancellation is also observed. Already-terminal results remain fixed. Reusing an idempotency key with the same payload returns the existing run; a different payload returns a conflict.</p>
+</section>
+<footer>Scout · PRD v0.36 · <a href="index.html">Architecture</a> · <a href="../../README.md">Repository README</a></footer>
+</main>
+
+<script>
+(() => {
+  const steps = {
+    accepted: { label: 'Question saved', title: 'First, Scout saves your question.',
+      explain: 'You choose a model, a tool version, a budget, and a deadline. Scout returns a run ID immediately, even if the work is still waiting to start.',
+      exampleTitle: 'What you see', items: ['Your question is accepted.', 'The run moves from queued to running when an execution slot is available.', 'You can watch progress or cancel while Scout works.'],
+      meaning: 'The run ID lets the browser fetch progress without keeping the original request open. Waiting in the queue uses the same deadline.', next: 'Before asking the model anything, Scout checks whether that request may start.' },
+    admission: { label: 'Check the limits', title: 'Before spending, Scout checks the limits.',
+      explain: 'Scout estimates the size of the input, then checks that the run is active, has not been cancelled, and still has time and budget. This final permission check is called admission.',
+      exampleTitle: 'Before one model call', items: ['Estimate input tokens using the counting API, with a local fallback (on the Claude Code path, usage is checked as it arrives).', 'Check cancellation, the deadline, the input ceiling, and the remaining budget.', 'Reserve enough for estimated input and the maximum allowed output; recheck stop conditions before sending.'],
+      meaning: 'If a check blocks the request, it is not sent. The run stops or remains terminal, with the appropriate reason. Every later research, repair, or retry request goes through these checks again.', next: 'If the checks pass, Scout sends the request to the model.' },
+    research: { label: 'Gather evidence', title: 'The model asks; the tools fetch.',
+      explain: 'For this question, a model using the summary tools (v2) or final tools (v5) might request the number of matching postings and distinct openings. The tool computes those counts over the frozen data and returns evidence that can be cited.',
+      exampleTitle: 'One possible exchange', items: ['Model → “Count matching postings in this window.”', 'Scout → calls search_job_postings and saves the returned evidence.', 'Tool result → the model uses the counts and collection context to decide what to do next.'],
+      meaning: 'This can repeat: the model may need another search or a posting’s text. Before each new model call, Scout checks the limits again. The model decides what to investigate; the tools retrieve or compute; Scout enforces the limits.', next: 'When ready, the model submits a proposed answer for Scout to check.' },
+    checks: { label: 'Check the answer', title: 'Scout checks the proposed answer.',
+      explain: 'The model submits its answer through submit_answer. Scout checks the answer’s structure, cited evidence, quotes, supplied arithmetic, and the completeness rules it can enforce.',
+      exampleTitle: 'In this normal path', items: ['The answer cites evidence this run actually received.', 'Quotes and supplied calculations pass the runtime checks.', 'Scout accepts the answer and ends the run as completed.'],
+      meaning: 'Completed means the runtime checks passed. It does not prove the answer is correct: offline grading checks task correctness. ', next: 'Scout returns the accepted answer and its supporting evidence.' },
+    result: { label: 'Return the result', title: 'You get the answer, evidence, and cost.',
+      explain: 'The browser reads the saved result. You can inspect the answer, follow its evidence, and see the usage, known cost, and final state.',
+      exampleTitle: 'What the result contains', items: ['Answer and qualifications about what the collected data can establish.', 'Citations linked to persisted tool evidence.', 'Final state, usage, cost, and any limitations.'],
+      meaning: 'A terminal state means no more research will run. Billing is tracked separately: if a charge remains unknown, the displayed cost stays unsettled until reliable usage arrives.', next: 'That is the normal lifecycle. Use the paths above to see repair, cancellation, or deadline expiry.' },
+    rejected: { label: 'Answer needs fixing', title: 'The first answer fails a check.',
+      explain: 'Suppose the proposed answer cites an evidence ID that Scout never delivered. Scout rejects that submission and tells the same model exactly which check failed.',
+      exampleTitle: 'Feedback, not a new run', items: ['The submitted answer is not accepted as completed.', 'Scout prepares feedback for the one permitted repair.', 'No additional budget or time is granted.'],
+      meaning: 'A turn that ends without submit_answer, including a token-limit stop, can also trigger the repair path. A repair still has to pass admission; it is not guaranteed another paid request.', next: 'Scout checks the limits again before sending the repair feedback to the model.' },
+    repair: { label: 'Try one repair', title: 'One more submission, under the same limits.',
+      explain: 'If admission passes, the same model receives the feedback. It may fetch more evidence before submitting a corrected answer. Every additional model request is checked against the original limits.',
+      exampleTitle: 'Two possible outcomes', items: ['Corrected answer passes → completed.', 'Corrected answer still fails → incomplete, with validation_failed.', 'Budget or time runs out first → incomplete with that limit as the reason.'],
+      meaning: 'There is one repair allowance, not an unlimited retry loop. This example follows the branch where the repair succeeds.', next: 'After the corrected answer passes, you receive the result.' },
+    cancel: { label: 'You click Cancel', title: 'Scout stops admitting new work.',
+      explain: 'In this example, a model request has already been sent when you cancel. Scout does not start another model request or data-tool call, but it still has to account for the request already in flight.',
+      exampleTitle: 'What you see', items: ['The run changes to cancelling.', 'The already-sent request may still finish and incur a charge.', 'When that request returns or times out, the run becomes cancelled.'],
+      meaning: 'Cancelling a queued run is immediate because no model request is in flight. Closing the browser does not cancel a run. If the deadline also expires, deadline precedence applies.', next: 'You receive any retained partial findings and the cost known so far.' },
+    cancelled: { label: 'Return partial work', title: 'The run is cancelled; billing may remain open.',
+      explain: 'Scout saves the cancelled outcome. If a partial answer was already available, eligible findings are retained with a limitation. Otherwise the findings can be empty.',
+      exampleTitle: 'Two independent facts', items: ['Run state: cancelled — no further research will run.', 'Cost: settled if all charges are known; unsettled if a request’s charge is still unknown.', 'Late usage may update billing, but cannot replace the answer.'],
+      meaning: 'Unknown charges keep their reservations, including after restart. Cancellation prevents new work; it does not erase the cost of work already sent.', next: 'The lifecycle ends here. If needed, billing reconciliation continues separately.' },
+    deadline: { label: 'Deadline expires', title: 'Time runs out during a model request.',
+      explain: 'Scout ends the run as incomplete with deadline_exceeded. It does not wait for the outstanding request to finish before making the terminal result available.',
+      exampleTitle: 'What you see immediately', items: ['Final state: incomplete.', 'Reason: deadline_exceeded.', 'Partial findings, if available; cost marked unsettled while billing is unknown.'],
+      meaning: 'A deadline can also expire in the queue or before a request is sent. In those cases no new model call starts. This path shows the in-flight case to explain why cost can arrive later.', next: 'If the provider later returns usage, Scout updates billing only.' },
+    late: { label: 'Settle late cost', title: 'Late usage changes the cost, not the result.',
+      explain: 'Suppose the provider returns the outstanding request’s usage. Scout records the actual charge and releases its reservation. It discards any late answer content.',
+      exampleTitle: 'What changes / what stays fixed', items: ['Updated: known cost and usage; cost becomes settled when every charge is known.', 'Unchanged: incomplete state, deadline_exceeded reason, and saved answer.', 'If usage never becomes known, the charge stays unsettled and reserved.'],
+      meaning: 'An error or a lost response is not proof of a zero charge. Scout releases an unknown reservation only when billing is reliably resolved.', next: 'No further research runs. Only billing reconciliation can remain outstanding.' }
+  };
+  const paths = {
+    normal: ['accepted','admission','research','checks','result'],
+    repair: ['accepted','admission','research','rejected','repair','result'],
+    cancel: ['accepted','admission','research','cancel','cancelled'],
+    limit: ['accepted','admission','research','deadline','late']
+  };
+  let scenario = 'normal', index = 0;
+  const timeline = document.getElementById('timeline');
+  const panel = document.getElementById('current-step');
+  const all = document.getElementById('full-story');
+  const prev = document.getElementById('previous');
+  const next = document.getElementById('next');
+  const toggle = document.getElementById('read-all');
+  function node(tag, className, text) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text != null) el.textContent = text;
+    return el;
+  }
+  function render() {
+    const path = paths[scenario], data = steps[path[index]];
+    timeline.replaceChildren();
+    path.forEach((key, i) => {
+      const li = node('li');
+      const button = node('button','step-link'); button.type = 'button';
+      button.setAttribute('aria-controls','current-step');
+      if (i === index) button.setAttribute('aria-current','step');
+      button.append(node('span','step-number',String(i+1)),node('span','',steps[key].label));
+      button.addEventListener('click', () => { index=i; render(); timeline.children[i].querySelector('button').focus(); });
+      li.append(button);timeline.append(li);
+    });
+    panel.replaceChildren(node('p','counter',`STEP ${index+1} OF ${path.length}`),node('h2','',data.title),node('p','explain',data.explain));
+    const example = node('div','example');example.append(node('p','example-label',data.exampleTitle));
+    const ul = node('ul');data.items.forEach(t=>ul.append(node('li','',t)));example.append(ul);panel.append(example);
+    panel.append(node('p','meaning',data.meaning));
+    const nextReason=node('p','next-reason');nextReason.append(node('span','',index===path.length-1?'Where this leaves us:':'What happens next:'),node('strong','',data.next));panel.append(nextReason);
+    prev.disabled=index===0;
+    next.textContent=index===path.length-1?'Back to the beginning ↺':`Next: ${steps[path[index+1]].label.toLowerCase()} →`;
+    document.getElementById('progress').textContent=`${index+1} / ${path.length}`;
+    document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scenario===scenario)));
+    all.replaceChildren();
+    path.forEach((key,i)=>{const d=steps[key],article=node('article');article.append(node('h3','',`${i+1}. ${d.title}`),node('p','',d.explain),node('p','note',d.meaning));all.append(article);});
+  }
+  document.querySelectorAll('[data-scenario]').forEach(button=>button.addEventListener('click',()=>{scenario=button.dataset.scenario;index=Math.min(index,3);render();}));
+  prev.addEventListener('click',()=>{if(index>0){index--;render();}});
+  next.addEventListener('click',()=>{index=(index+1)%paths[scenario].length;render();});
+  toggle.addEventListener('click',()=>{all.hidden=!all.hidden;toggle.setAttribute('aria-expanded',String(!all.hidden));toggle.textContent=all.hidden?'Read this whole path at once':'Hide the full path';});
+  render();
+})();
+</script>
+</body>
+</html>

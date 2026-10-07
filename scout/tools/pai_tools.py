@@ -65,7 +65,8 @@ GROUP_IDS_MAX = 50
 IDENTITY_RULE_VERSION = "identity-v2"
 IDENTITY_KEY = ["company_normalized", "lower(trim(title))"]
 SEARCH_MODES = ("records", "counts", "duplicate_groups")
-DESIGNS = ("baseline", "redesigned")
+DESIGNS = ("baseline", "redesigned", "tuned", "dated", "v5")  # tuned, dated, v5: scout/tools/<name>.py, built on redesigned
+EXTENSION_DESIGNS = ("tuned", "dated", "v5")
 
 IDENTITY_RULE = (
     "A distinct opening is the pair (company_normalized, lower(trim(title))) within the matching query. "
@@ -471,6 +472,9 @@ def sections(text: str, headings: list[str] | None = None) -> dict[str, Any]:
 
 def tool_definitions(design: str) -> list[dict[str, Any]]:
     assert design in DESIGNS
+    if design in EXTENSION_DESIGNS:
+        from importlib import import_module
+        return import_module(f"scout.tools.{design}").tool_definitions(tool_definitions("redesigned"))
     snap = {"type": "string", "minLength": 1, "description": "Snapshot id, e.g. pai-2026-07 or pai-w-2026-07-20"}
     fstr = {"type": "string", "minLength": 1, "maxLength": FILTER_MAX}
     list_props: dict[str, Any] = {
@@ -610,6 +614,9 @@ def execute_tool(data: PAIData, design: str, name: str, args: dict[str, Any]) ->
     """Run a tool call; returns a JSON-serializable dict (errors are returned, not raised)."""
     if design not in DESIGNS:
         raise ValueError(f"unknown design {design!r}")
+    if design in EXTENSION_DESIGNS:
+        from importlib import import_module
+        return import_module(f"scout.tools.{design}").execute_tool(data, name, args, lambda a: execute_tool(data, "redesigned", name, a))
     try:
         if not isinstance(name, str) or name not in {"get_dataset_context", "search_job_postings", "get_job_posting"}:
             raise ToolError("unknown_tool", f"no tool named {name}")

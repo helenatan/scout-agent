@@ -16,7 +16,9 @@ from pathlib import Path
 import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = {("haiku", "baseline"): "A", ("opus", "baseline"): "B", ("haiku", "redesigned"): "C", ("opus", "redesigned"): "D"}
+CONFIG = {("haiku", "baseline"): "A", ("opus", "baseline"): "B", ("haiku", "redesigned"): "C", ("opus", "redesigned"): "D", ("haiku", "tuned"): "E",
+          ("sonnet", "baseline"): "S-B", ("sonnet", "redesigned"): "S-R", ("sonnet", "tuned"): "S-T", ("sonnet", "dated"): "S-D", ("sonnet", "v5"): "S-V5",
+          ("haiku", "v5"): "H-V5", ("opus", "v5"): "O-V5"}
 TERMINAL = {"completed", "incomplete", "cancelled", "failed"}
 
 
@@ -247,6 +249,7 @@ def main() -> None:
             reconcile(client, out, manifest, a.settlement_wait_seconds)
         else:
             tasks = [json.loads(p.read_text()) for p in sorted(Path(a.tasks).glob("*.json")) if not p.name.startswith("_")]
+            tasks = [t for t in tasks if isinstance(t, dict) and "request" in t]  # skip freeze/rubric files beside the tasks
             if a.only:
                 tasks = [t for t in tasks if t["id"] in set(a.only.split(","))]
             manifest = run_matrix(client, out, tasks, label=a.label, models=a.models.split(","), designs=a.designs.split(","),

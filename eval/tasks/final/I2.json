@@ -1,0 +1,17 @@
+{
+  "id": "I2",
+  "suite_version": "final-v3-reviewed",
+  "group": "I",
+  "blueprint": "I2",
+  "request": {
+    "task": "Assess the claim: 'GridCARE and Arrow Electronics both increased their demand for hands-on AI-agent-building experience between pai-2026-05 and pai-2026-06.' Inspect all PM postings returned by the two company filters, without a text prefilter. For each company and window report raw and distinct cohort counts, plus distinct postings explicitly requiring prior hands-on experience building or shipping AI-agent systems. Cite the settling evidence, handle recaptures under the published identity rule, and assess each company separately before the combined claim. Distinguish responsibilities or general AI experience from that specific qualification, and distinguish captured evidence from market demand.",
+    "snapshot_ids": [
+      "pai-2026-05",
+      "pai-2026-06"
+    ],
+    "max_cost_usd": 1.5,
+    "deadline_seconds": 400,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

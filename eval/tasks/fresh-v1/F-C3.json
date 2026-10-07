@@ -1,0 +1,17 @@
+{
+  "id": "F-C3",
+  "suite_version": "fresh-v1-draft",
+  "group": "C",
+  "blueprint": "F-C3",
+  "request": {
+    "task": "Using the literal case-insensitive text filter 'fraud' on PM postings across all configured sources, compare pai-w-2026-06-01 with pai-w-2026-06-29. Report raw records and distinct openings under the published identity rule, per-source breakdowns and the absolute change in distinct openings. Is a comparison of these two weeks supported, and what can we say from it?",
+    "snapshot_ids": [
+      "pai-w-2026-06-01",
+      "pai-w-2026-06-29"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

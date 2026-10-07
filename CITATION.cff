@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Scout: Better Tools or a Stronger Model?"
+abstract: >-
+  A controlled case study of whether better data tools let a cheaper Claude model match a more expensive one on
+  research tasks over captured job postings. Includes the agent, five tool versions, the evaluation harness, graders
+  and every graded attempt.
+authors:
+  - family-names: Tan
+    given-names: Helena
+type: software
+license: MIT
+repository-code: "https://github.com/helenatan/scout-agent"
+date-released: 2026-10-07
+keywords:
+  - AI agents
+  - tool design
+  - evaluation
+  - Model Context Protocol
+  - Claude

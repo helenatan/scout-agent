@@ -1,0 +1,17 @@
+{
+  "id": "F-I2",
+  "suite_version": "fresh-v1-draft",
+  "group": "I",
+  "blueprint": "F-I2",
+  "request": {
+    "task": "A colleague says: 'Capital One held its PM hiring steady between the weeks of August 3 and August 17, four new openings each week, and most of those roles require prior product-management experience.' Check this using company filter 'Capital One' in pai-w-2026-08-03 and pai-w-2026-08-17. For each week report raw records and distinct openings under the published identity rule, and how many distinct openings require prior product-management experience under every option their stated qualifications allow, citing the qualification text. Assess each half of the claim, and say how much weight the week-to-week comparison can bear.",
+    "snapshot_ids": [
+      "pai-w-2026-08-03",
+      "pai-w-2026-08-17"
+    ],
+    "max_cost_usd": 1.5,
+    "deadline_seconds": 400,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

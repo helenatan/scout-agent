@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Scout Works</title>
+<!-- Architecture views for Scout, PRD v0.36. Self-contained: no external scripts or styles. -->
+<style>
+  /* Layout: one reading column; two drawn views (a run, an evaluation) that redraw to fit the column. */
+  :root {
+    --background: rgb(255 255 255);
+    --foreground: rgb(26 28 31);
+    --muted-foreground: rgb(26 28 31 / 64%);
+    --border: rgb(26 28 31 / 12%);
+    --blue: rgb(51 156 255);
+    --orange: rgb(226 85 7);
+    --green: rgb(0 162 64);
+    --band: color-mix(in srgb, var(--green) 3%, var(--background));
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --background: rgb(24 24 24); --foreground: rgb(255 255 255); --muted-foreground: rgb(255 255 255 / 64%); --border: rgb(255 255 255 / 14%); --orange: rgb(251 106 34); --green: rgb(64 201 119); color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --background: rgb(24 24 24); --foreground: rgb(255 255 255); --muted-foreground: rgb(255 255 255 / 64%); --border: rgb(255 255 255 / 14%); --orange: rgb(251 106 34); --green: rgb(64 201 119); color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 40px;
+    color: var(--foreground);
+    background: var(--background);
+    font: 430 14px/1.5 -apple-system, system-ui, "Segoe UI", sans-serif;
+  }
+  #scout-architecture { max-width: 1240px; margin: 0 auto; }
+  h1, h2, p { margin: 0; }
+  h1 { font-size: 24px; font-weight: 500; line-height: 1.25; }
+  h2 { font-size: 18px; font-weight: 500; line-height: 1.3; margin-top: 36px; }
+  code { font: 0.92em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+  .small { font-size: 12px; line-height: 1.5; }
+  .muted { color: var(--muted-foreground); }
+  .af-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+  .af-status {
+    padding: 3px 10px;
+    border: 1px solid color-mix(in srgb, var(--orange) 45%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--orange) 10%, var(--background));
+    font-weight: 500;
+  }
+  .af-lede { margin-top: 8px; max-width: 78ch; }
+  .af-intro { margin-top: 6px; max-width: 78ch; }
+
+  .af-study { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 32px; margin-top: 14px; align-items: start; }
+  @media (max-width: 760px) { .af-study { grid-template-columns: minmax(0, 1fr); } }
+  .af-matrix { width: 100%; border-collapse: separate; border-spacing: 6px; margin: -6px; table-layout: fixed; }
+  .af-matrix th { font-weight: 500; text-align: start; vertical-align: bottom; padding: 2px 4px; }
+  .af-matrix th[scope="row"] { vertical-align: middle; width: 27%; }
+  .af-matrix td { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; vertical-align: top; }
+  .af-matrix td b { display: block; font-size: 16px; font-weight: 500; }
+  .af-matrix td.af-headline { border-color: var(--foreground); box-shadow: inset 0 0 0 1px var(--foreground); }
+  .af-why { margin: 8px 0 0; padding-left: 18px; }
+  .af-why li { margin-top: 4px; }
+
+  .af-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 12px 0 14px; }
+  .af-legend[hidden] { display: none; }
+  .af-legend[hidden] + .af-svg { margin-top: 16px; }
+  .af-key { display: inline-flex; align-items: center; gap: 7px; }
+  .af-swatch { width: 10px; height: 10px; border-radius: 50%; background: var(--tone); }
+  .af-svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .af-svg text { fill: var(--foreground); font-family: inherit; }
+  .af-svg .af-secondary { fill: var(--muted-foreground); }
+  .af-svg .af-medium { font-weight: 500; }
+  .af-svg .af-surface { fill: color-mix(in srgb, var(--tone) 9%, var(--background)); stroke: var(--border); stroke-width: 1; }
+  .af-svg .af-accent { fill: var(--tone); }
+  .af-svg .af-wire { fill: none; stroke: var(--muted-foreground); stroke-width: 1.3; }
+  .af-svg .af-halo { paint-order: stroke; stroke: var(--halo, var(--background)); stroke-width: 6px; stroke-linejoin: round; }
+  .af-notes { margin: 14px 0 0; padding-left: 18px; max-width: 90ch; }
+  .af-notes li { margin-top: 4px; }
+  .af-foot { margin-top: 28px; }
+  .af-foot summary { cursor: pointer; font-weight: 500; }
+  .af-foot dl { margin: 10px 0 0; display: grid; grid-template-columns: minmax(120px, 200px) minmax(0, 1fr); gap: 8px 16px; max-width: 90ch; }
+  .af-foot dt { font-weight: 500; }
+  .af-foot dd { margin: 0; }
+  @media (max-width: 560px) { .af-foot dl { grid-template-columns: minmax(0, 1fr); gap: 2px; } .af-foot dd { margin-bottom: 8px; } }
+</style>
+</head>
+<body style="margin:0">
+<main id="scout-architecture">
+  <div class="af-heading">
+    <h1>Scout architecture</h1>
+    <span class="af-status small">Built and evaluated · PRD v0.36</span>
+  </div>
+  <p class="af-lede">Scout answers hiring questions over PAI’s saved job postings, and records the evidence and cost of every answer. The study asks whether better tools let a cheaper model meet the same quality requirements. To follow one run from question to checked answer, see the <a href="lifecycle.html" style="color:inherit">run lifecycle</a>. The code is in this repository; start with the <a href="../../README.md" style="color:inherit">README</a>.</p>
+
+  <h2 id="af-study-title">The study: three models, five tool versions</h2>
+  <div class="af-study">
+    <div style="min-width:0;overflow-x:auto">
+      <table class="af-matrix" aria-labelledby="af-study-title" style="min-width:520px">
+        <thead>
+          <tr><td style="border:0;padding:0"></td><th scope="col">Basic<br><span class="small muted">v1</span></th><th scope="col">Summary<br><span class="small muted">v2</span></th><th scope="col">Explicit caveats<br><span class="small muted">v3</span></th><th scope="col">Dated summary<br><span class="small muted">v4</span></th><th scope="col">Final<br><span class="small muted">v5</span></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Haiku 4.5<br><span class="small muted">lowest cost</span></th>
+            <td><span class="small">Final evaluation</span></td>
+            <td><span class="small">Final evaluation</span></td>
+            <td><span class="small">Tuning, with a self-check</span></td>
+            <td><span class="small muted">Not run</span></td>
+            <td><span class="small muted">Not run</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Sonnet 5.5<br><span class="small muted">middle cost</span></th>
+            <td><span class="small">Original tasks</span></td>
+            <td><span class="small">Original tasks</span></td>
+            <td><span class="small">Original tasks</span></td>
+            <td><span class="small">Original tasks</span></td>
+            <td class="af-headline"><span class="small">Original and fresh tasks</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Opus 5<br><span class="small muted">highest cost</span></th>
+            <td class="af-headline"><span class="small">Reference: original and fresh tasks</span></td>
+            <td><span class="small">Final evaluation</span></td>
+            <td><span class="small muted">Not run</span></td>
+            <td><span class="small muted">Not run</span></td>
+            <td><span class="small">Fresh tasks</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="small muted" style="margin-top:10px">Headline comparison, outlined: <strong>Sonnet 5.5 with the final tools against Opus 5 with basic tools</strong>. Every attempt uses exactly one model and one tool version; the prompt, budget, deadline, checks, and grading stay fixed. Basic, summary and final tools are product designs; explicit caveats and dated summary were built only for the experiments.</p>
+    </div>
+    <div>
+      <p><strong>Why redesign the tools?</strong> “Is hiring for agent-building skills increasing?” needs more than raw counts:</p>
+      <ul class="af-why">
+        <li><strong>Duplicates inflate counts.</strong> One opening can appear across sources or locations.</li>
+        <li><strong>Collection limits distort trends.</strong> Missing data can look like declining hiring; zero records do not establish zero openings.</li>
+        <li><strong>Mentions are not requirements.</strong> “We build agents” does not mean applicants need agent-building experience.</li>
+      </ul>
+      <p class="small muted" style="margin-top:10px">The later versions move counting into code and attach the collection record to results; the final tools also write each data gap as a sentence the model is told to copy. The model still selects the cohort, interprets requirements, and judges what the evidence supports.</p>
+    </div>
+  </div>
+
+  <h2>1 · Answer a research question</h2>
+  <p class="af-intro muted">One run, from the browser to Scout’s backend and back. The model and the data tools are peers called by Scout; the model never touches the data directly.</p>
+  <div class="af-legend small" id="af-legend" aria-label="Where each component runs">
+    <span class="af-key"><span class="af-swatch" style="--tone:var(--blue)" aria-hidden="true"></span>Browser · what you see</span>
+    <span class="af-key"><span class="af-swatch" style="--tone:var(--green)" aria-hidden="true"></span>Local · Scout on your computer</span>
+    <span class="af-key"><span class="af-swatch" style="--tone:var(--orange)" aria-hidden="true"></span>External · Anthropic</span>
+  </div>
+  <svg class="af-svg" id="af-live" role="img" aria-labelledby="af-live-title af-live-desc">
+    <title id="af-live-title">One research run, from browser to backend and back</title>
+    <desc id="af-live-desc">The user submits a question, a model and tool version, collection windows, a budget, and a deadline through the browser, and may cancel. Scout's local HTTP API returns a run ID immediately and starts the execution loop. The loop calls Haiku 4.5, Sonnet 5.5 or Opus 5, through Anthropic's Messages API or a headless Claude Code session, and executes the model's tool requests through a local MCP server over stdio. The server exposes search_job_postings, get_job_posting, and get_dataset_context over a read-only frozen PAI dataset, in one tool version, fixed per run. When the model calls submit_answer, Scout's runtime checks return a verdict; if the answer is invalid, Scout sends feedback for at most one same-model repair within the original budget and deadline. The loop saves progress and results to the run store throughout the run. The HTTP API reads the store to serve status, results, and events, which the browser polls, including while the run is in progress.</desc>
+  </svg>
+  <ul class="af-notes small muted">
+    <li>Budget, deadline, or cancellation can stop research or repair early. Partial work is saved and returned as <code>incomplete</code> or <code>cancelled</code>.</li>
+    <li>Runtime checks catch mechanical problems without an answer key. <code>completed</code> never means verified correct; only offline grading judges that.</li>
+  </ul>
+
+  <h2>2 · Evaluate and compare configurations</h2>
+  <p class="af-intro muted">The evaluation runner exercises the same HTTP API and execution path as an interactive question, then grading and reporting happen offline.</p>
+  <svg class="af-svg" id="af-evaluation" role="img" aria-labelledby="af-eval-title af-eval-desc" style="margin-top:14px">
+    <title id="af-eval-title">Offline evaluation using the same execution path</title>
+    <desc id="af-eval-desc">An evaluation runner submits every task in a suite under each setup, three attempts each, through the same Scout HTTP API, and exports the finished run records to a saved evaluation runs store. An offline grader reads answers and evidence from the saved runs and private answer keys from a separate store used for grading only. Code checks facts with one right value; judge models check the judgment points, and disagreements go to a person. The report builder combines the grades with costs, times, and outcomes read directly from the saved runs. The browser comparison screen reads the saved report over HTTP and does not launch evaluations.</desc>
+  </svg>
+  <ul class="af-notes small muted">
+    <li>Private answer keys are never available to the model, the MCP tools, or the runtime checks.</li>
+    <li>The comparison screen reads saved reports and never launches evaluations. Saved results can be inspected without an API key.</li>
+  </ul>
+
+  <details class="af-foot small">
+    <summary>Diagram key</summary>
+    <dl>
+      <dt>MCP · Model Context Protocol</dt><dd>The execution loop calls the three data tools through a separate local server process, one per run. Stdio carries requests and results over standard input and output.</dd>
+      <dt>Model connection</dt><dd>Scout calls Anthropic’s Messages API through the Python SDK, or runs the same loop through a headless Claude Code session with Scout’s tools exposed over an MCP bridge. The study used the Claude Code path on a subscription, so its costs are notional. Either way, the model requests tools and Scout executes them.</dd>
+      <dt>Reading the flow</dt><dd>Each arrow is a labeled action or returned data. The HTTP API appears twice in the first view because the same service both accepts runs and serves them.</dd>
+      <dt>Scope</dt><dd>Local MVP from PRD v0.36. Tool names match the code. Built: counts, duplicate groups, attached and dated collection context, caveat sentences, excerpts and section reading, evidence-scope completeness checks, lifecycle and accounting hardening, and durable evidence storage. Evaluated: the final evaluation of Haiku and Opus, the Sonnet tool-version experiments, and the fresh-task comparison.</dd>
+    </dl>
+  </details>
+</main>
+
+<script>
+(() => {
+  const root = document.getElementById('scout-architecture');
+  const live = root.querySelector('#af-live');
+  const evaluation = root.querySelector('#af-evaluation');
+  const legend = root.querySelector('#af-legend');
+  const NS = 'http://www.w3.org/2000/svg';
+  const tones = {browser: 'var(--blue)', local: 'var(--green)', external: 'var(--orange)'};
+  const ctx = document.createElement('canvas').getContext('2d');
+  const base = 14, small = 12, lh = base * 1.45;
+
+  // One copy deck for every layout, so the wide and stacked views cannot drift apart.
+  const COPY = {
+    ask: {tone: 'browser', where: '1 · BROWSER · RUN DETAIL', title: 'Ask Scout', subtitle: 'Question, model, tool version, collection windows, budget, and deadline.'},
+    accept: {where: '2 · HTTP API · WRITE ENDPOINTS', title: 'Accept or cancel the run', subtitle: 'POST /v1/runs returns a run ID immediately. POST /v1/runs/{id}/cancel stops new work.', footer: 'Same service as step 6, which serves the two GET endpoints from the run store'},
+    engine: {where: '3 · EXECUTION LOOP', title: 'Coordinate the research', subtitle: 'Awaits token estimation, then checks stop conditions and reserves budget before each model call, including repair. Tracks evidence and executes tool requests. Admission is rechecked after token estimation, including repair and retry.'},
+    model: {tone: 'external', where: 'ANTHROPIC · MESSAGES API OR CLAUDE CODE', title: 'Haiku 4.5, Sonnet 5.5 or Opus 5', subtitle: 'Reasons and requests tools. submit_answer is added by the service; it is not one of the three MCP data tools. The study ran through headless Claude Code; Scout keeps the tools, checks, and limits on either path.', footer: 'One model per run · never switched silently'},
+    tools: {where: 'LOCAL MCP SERVER · ONE PER RUN', title: 'Three PAI data tools', items: [
+      {name: 'search_job_postings', desc: 'Literal filters and paginated records. From the summary tools on: counts mode (raw and distinct counts) and duplicate groups. The final tools add counts per source and name the groups.'},
+      {name: 'get_job_posting', desc: 'Full posting text. Later versions add short excerpts around query terms and exact source sections, falling back to full text when structure is unavailable. The model interprets what the text means.'},
+      {name: 'get_dataset_context', desc: 'Collection coverage, dates, rules, and notes. Later versions attach this context to search results: dated gaps (v4, v5) and caveat sentences to copy (v3, v5).'}
+    ], footer: 'Same names in every version · one version fixed per run'},
+    data: {where: 'LOCAL · READ-ONLY DATA', title: 'Frozen PAI dataset', subtitle: 'Posting records + collection logs, one fixed version.'},
+    checks: {where: '4 · RUNTIME CHECKS', title: 'Check the submitted answer', subtitle: 'Structure, citations and quotes, supplied arithmetic, and completeness: a finding about records cites them with every page read; a count may rest on a complete count result.', footer: 'No answer key · at most one same-model repair'},
+    store: {where: '5 · RUN STORE', title: 'Save progress and results', subtitle: 'Persists runs, events, request ledgers, exact delivered evidence payloads, and provenance. The events API exposes the evidence archive after restart.', footer: 'Terminal state is separate from billing settlement. Late usage updates cost only; the answer stays fixed.'},
+    serve: {where: '6 · HTTP API · READ ENDPOINTS', title: 'Serve status and results', subtitle: 'GET /v1/runs/{id} returns state, answer, evidence, usage, and cost. GET /v1/runs/{id}/events returns ordered events and per-request cost.', footer: 'Polled from the moment the run ID is returned, not only at the end'},
+    inspect: {tone: 'browser', where: '7 · BROWSER · RUN DETAIL', title: 'Inspect the answer', subtitle: 'Answer and evidence first, then cost, time, limitations, and request history.'},
+    runner: {where: 'LOCAL · EVALUATION RUNNER', title: 'Run every task under each setup', subtitle: 'Original suite: 11 tasks × 3 attempts per setup. Fresh suite: 10 tasks × 3 attempts × 3 setups. Submits and polls through the same Scout HTTP API as an interactive question.'},
+    records: {where: 'LOCAL · SAVED EVALUATION RUNS', title: 'Keep every launched run', subtitle: 'Answers, evidence, usage, cost, time, and outcome, including failures and repairs.'},
+    keys: {where: 'PRIVATE', title: 'Answer keys', subtitle: 'Grading only.', footer: 'Never in live runs'},
+    grader: {where: 'LOCAL · OFFLINE GRADER', title: 'Grade the answers', subtitle: 'Code checks facts with one right value; judge models check the judgment points against the private keys. Disagreements go to a person.'},
+    report: {where: 'LOCAL · REPORT BUILDER', title: 'Compare configurations', subtitle: 'Grades + recorded costs, times, and outcomes.', footer: 'Saves findings and uncertainty'},
+    compare: {tone: 'browser', where: 'BROWSER · COMPARISON', title: 'See which investment is worthwhile', subtitle: 'Which options qualify, cost per successful answer, time, and how certain the finding is.'}
+  };
+  const LABEL = {
+    submit: 'POST · submit, cancel', start: 'Start run · cancel', https: 'HTTPS', messages: '↔ Messages API · HTTPS', mcp: 'MCP · stdio',
+    readOnly: 'Read only', answer: 'submit_answer', feedback: 'feedback · one repair',
+    save: 'Save progress and results · throughout', read: 'Status and results · readable while running', poll: 'GET · poll',
+    exported: 'Exported run records', toGrader: 'Answers + evidence', toReport: 'Costs, times, outcomes', grades: 'Grades', http: 'Saved report · HTTP'
+  };
+
+  function el(name, attrs, parent) {
+    const n = document.createElementNS(NS, name);
+    Object.entries(attrs || {}).forEach(([k, v]) => n.setAttribute(k, String(v)));
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function text(parent, x, y, value, o = {}) {
+    const cls = [o.small ? 'af-secondary' : '', o.medium ? 'af-medium' : '', o.halo ? 'af-halo' : ''].filter(Boolean).join(' ');
+    const n = el('text', {x, y, 'dominant-baseline': 'middle', 'font-size': o.small ? small : base, class: cls, ...(o.attrs || {})}, parent);
+    n.textContent = value;
+    return n;
+  }
+  function lines(value, width, isSmall, medium) {
+    ctx.font = `${medium ? 500 : 430} ${isSmall ? small : base}px ${getComputedStyle(root).fontFamily}`;
+    const result = [];
+    let current = '';
+    value.split(' ').forEach(word => {
+      const next = current ? current + ' ' + word : word;
+      if (current && ctx.measureText(next).width > width) { result.push(current); current = word; }
+      else current = next;
+    });
+    if (current) result.push(current);
+    return result;
+  }
+  function prepare(svg, id) {
+    svg.querySelectorAll('g.af-drawing, defs').forEach(n => n.remove());
+    const defs = el('defs', {}, svg);
+    const marker = el('marker', {id, viewBox: '0 0 8 8', refX: 7, refY: 4, markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse'}, defs);
+    el('path', {d: 'M 1 1 L 7 4 L 1 7', fill: 'none', stroke: 'var(--muted-foreground)', 'stroke-width': 1.3}, marker);
+    return el('g', {class: 'af-drawing'}, svg);
+  }
+  function finish(svg, w, h) {
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+  }
+  function wire(g, d, id, both = false) {
+    return el('path', {d, class: 'af-wire', 'marker-end': `url(#${id})`, ...(both ? {'marker-start': `url(#${id})`} : {})}, g);
+  }
+  // A box: location line, title, then optional subtitle, name/description items, and footer.
+  function node(g, copy, {x, y, w}) {
+    const group = el('g', {style: `--tone:${tones[copy.tone || 'local']}`}, g);
+    const pad = 16, tw = w - pad * 2;
+    const bg = el('rect', {x, y, width: w, height: 10, rx: 8, class: 'af-surface'}, group);
+    el('rect', {x: x + pad, y: y + 12, width: 5, height: 12, rx: 2, class: 'af-accent'}, group);
+    let cy = y + 18;
+    lines(copy.where, tw - 13, true).forEach((row, i) => { text(group, x + pad + 13, cy, row, {small: true}); cy += small * 1.5; });
+    cy += 11;
+    const port = cy;
+    const block = (value, o) => lines(value, tw, o.small, o.medium).forEach(row => { text(group, x + pad, cy, row, o); cy += lh; });
+    block(copy.title, {medium: true});
+    if (copy.subtitle) { cy += 2; block(copy.subtitle, {small: true}); }
+    (copy.items || []).forEach(item => { cy += 9; block(item.name, {medium: true}); block(item.desc, {small: true}); });
+    if (copy.footer) { cy += 9; block(copy.footer, {small: true}); }
+    const h = cy - lh / 2 + 13 - y;
+    bg.setAttribute('height', h);
+    return {x, y, w, h, cx: x + w / 2, right: x + w, bottom: y + h, port};
+  }
+  function connector(g, a, b, id, label, x = a.cx) {
+    wire(g, `M ${x} ${a.bottom + 3} V ${b.y - 5}`, id);
+    if (label) text(g, x + 10, (a.bottom + b.y) / 2, label, {small: true, halo: true});
+  }
+
+  function drawLive(w) {
+    const wide = w >= 1000;
+    legend.hidden = wide; // the lane headers carry the same information
+    if (wide) drawLanes(w); else drawStack(w);
+  }
+
+  // Wide view: three lanes. Browser | Scout on your computer | Anthropic.
+  function drawLanes(w) {
+    const id = 'af-arrow-live', g = prepare(live, id);
+    g.setAttribute('style', '--halo:var(--band)');
+    const ux = 2, uw = 172, gapL = 140, lx = ux + uw + gapL, cw = 196, cx = w - cw - 2, lw = cx - 34 - lx;
+    const ix = lx + 18, iw = lw - 36;
+    const band = el('rect', {x: lx - 10, y: 30, width: lw + 20, height: 10, rx: 10, fill: 'var(--band)'}, g);
+    [[ux, 'Your screen', 'var(--blue)'], [lx, 'Scout on your computer', 'var(--green)'], [cx, 'Anthropic', 'var(--orange)']].forEach(([x, label, color]) => {
+      el('circle', {cx: x + 5, cy: 13, r: 4, fill: color}, g);
+      text(g, x + 17, 13, label, {medium: true});
+    });
+    const between = (x1, x2, y, label) => text(g, (x1 + x2) / 2, y - 12, label, {small: true, attrs: {'text-anchor': 'middle', style: '--halo:var(--background)'}, halo: true});
+
+    const ask = node(g, COPY.ask, {x: ux, y: 48, w: uw});
+    const accept = node(g, COPY.accept, {x: lx, y: 48, w: lw});
+    wire(g, `M ${ask.right + 3} ${accept.port} H ${lx - 5}`, id);
+    between(ask.right, lx, accept.port, LABEL.submit);
+
+    const engine = node(g, COPY.engine, {x: ix, y: Math.max(ask.bottom, accept.bottom) + 40, w: iw});
+    connector(g, accept, engine, id, LABEL.start);
+    const model = node(g, COPY.model, {x: cx, y: engine.y, w: cw});
+    wire(g, `M ${engine.right + 3} ${engine.port} H ${cx - 5}`, id, true);
+    between(engine.right, cx, engine.port, LABEL.https);
+
+    // Row below the loop: the MCP tools with their data, and the runtime checks.
+    const rowY = Math.max(engine.bottom, model.bottom) + 46, colGap = 28;
+    const tw = Math.round((iw - colGap) * 0.6), kw = iw - colGap - tw;
+    const tools = node(g, COPY.tools, {x: ix, y: rowY, w: tw});
+    wire(g, `M ${tools.cx} ${engine.bottom + 3} V ${tools.y - 5}`, id, true);
+    text(g, tools.cx + 10, rowY - 17, LABEL.mcp, {small: true, halo: true});
+    const data = node(g, COPY.data, {x: ix + 12, y: tools.bottom + 32, w: tw - 24});
+    connector(g, tools, data, id, LABEL.readOnly);
+    const checks = node(g, COPY.checks, {x: ix + tw + colGap, y: rowY, w: kw});
+    wire(g, `M ${checks.cx - 30} ${engine.bottom + 3} V ${checks.y - 5}`, id);
+    wire(g, `M ${checks.cx + 30} ${checks.y - 3} V ${engine.bottom + 5}`, id);
+    text(g, checks.cx - 38, rowY - 17, '↓ ' + LABEL.answer, {small: true, halo: true, attrs: {'text-anchor': 'end'}});
+    text(g, checks.cx + 38, rowY - 17, '↑ ' + LABEL.feedback, {small: true, halo: true});
+
+    // The loop writes to the store throughout the run, not only at the end.
+    const store = node(g, COPY.store, {x: lx, y: Math.max(data.bottom, checks.bottom) + 40, w: lw});
+    const rail = lx + 7;
+    wire(g, `M ${ix - 3} ${engine.port} H ${rail} V ${store.y - 5}`, id);
+    const ry = (engine.port + store.y) / 2;
+    text(g, rail, ry, LABEL.save, {small: true, halo: true, attrs: {'text-anchor': 'middle', transform: `rotate(-90 ${rail} ${ry})`}});
+
+    const serve = node(g, COPY.serve, {x: lx, y: store.bottom + 36, w: lw});
+    connector(g, store, serve, id, LABEL.read);
+    const inspect = node(g, COPY.inspect, {x: ux, y: serve.y, w: uw});
+    wire(g, `M ${lx - 3} ${serve.port} H ${inspect.right + 5}`, id);
+    between(inspect.right, lx, serve.port, LABEL.poll);
+
+    const bottom = Math.max(serve.bottom, inspect.bottom) + 16;
+    band.setAttribute('height', Math.max(serve.bottom + 16, 40) - 30);
+    finish(live, w, bottom);
+  }
+
+  // Stacked view: the loop's three peers hang off one trunk, which ends in the run store.
+  function drawStack(w) {
+    const id = 'af-arrow-live', g = prepare(live, id);
+    const left = 2, content = w - left - 2, trunk = left + 9, sx = left + 40, sw = content - 40;
+    const ask = node(g, COPY.ask, {x: left, y: 4, w: content});
+    const accept = node(g, COPY.accept, {x: left, y: ask.bottom + 36, w: content});
+    connector(g, ask, accept, id, LABEL.submit);
+    const engine = node(g, COPY.engine, {x: left, y: accept.bottom + 36, w: content});
+    connector(g, accept, engine, id, LABEL.start);
+
+    const peer = (copy, y, label) => {
+      text(g, sx + 2, y + 12, label, {small: true});
+      const n = node(g, copy, {x: sx, y: y + 28, w: sw});
+      wire(g, `M ${trunk + 3} ${n.y + 18} H ${sx - 5}`, id, true);
+      return n;
+    };
+    const model = peer(COPY.model, engine.bottom + 12, LABEL.messages);
+    const tools = peer(COPY.tools, model.bottom + 14, '↔ ' + LABEL.mcp);
+    const data = node(g, COPY.data, {x: sx + 12, y: tools.bottom + 32, w: sw - 24});
+    connector(g, tools, data, id, LABEL.readOnly);
+    const checks = peer(COPY.checks, data.bottom + 14, `↓ ${LABEL.answer} · ↑ ${LABEL.feedback}`);
+
+    const store = node(g, COPY.store, {x: left, y: checks.bottom + 46, w: content});
+    wire(g, `M ${trunk} ${engine.bottom + 3} V ${store.y - 5}`, id);
+    text(g, trunk + 10, store.y - 20, LABEL.save, {small: true, halo: true});
+    const serve = node(g, COPY.serve, {x: left, y: store.bottom + 36, w: content});
+    connector(g, store, serve, id, LABEL.read);
+    const inspect = node(g, COPY.inspect, {x: left, y: serve.bottom + 36, w: content});
+    connector(g, serve, inspect, id, LABEL.poll);
+    finish(live, w, inspect.bottom + 4);
+  }
+
+  function drawEval(w) {
+    const id = 'af-arrow-eval', g = prepare(evaluation, id);
+    if (w >= 860) {
+      const x = 2, cw = w - 4, gap = 30;
+      const runner = node(g, COPY.runner, {x, y: 4, w: cw});
+      const records = node(g, COPY.records, {x, y: runner.bottom + 36, w: cw});
+      connector(g, runner, records, id, LABEL.exported);
+      const kw = Math.round(cw * 0.16), bw = (cw - kw - gap * 3) / 3, ry = records.bottom + 44;
+      const keys = node(g, COPY.keys, {x, y: ry, w: kw});
+      const grader = node(g, COPY.grader, {x: keys.right + gap, y: ry, w: bw});
+      const report = node(g, COPY.report, {x: grader.right + gap, y: ry, w: bw});
+      const compare = node(g, COPY.compare, {x: report.right + gap, y: ry, w: bw});
+      connector(g, records, grader, id, LABEL.toGrader, grader.cx);
+      connector(g, records, report, id, LABEL.toReport, report.cx);
+      wire(g, `M ${keys.right + 3} ${grader.port} H ${grader.x - 5}`, id);
+      wire(g, `M ${grader.right + 3} ${grader.port} H ${report.x - 5}`, id);
+      wire(g, `M ${report.right + 3} ${report.port} H ${compare.x - 5}`, id);
+      finish(evaluation, w, Math.max(keys.bottom, grader.bottom, report.bottom, compare.bottom) + 4);
+      return;
+    }
+    // Stacked: costs and times bypass the grader on the left rail.
+    const left = 30, content = w - left - 2, rail = 9;
+    const runner = node(g, COPY.runner, {x: left, y: 4, w: content});
+    const records = node(g, COPY.records, {x: left, y: runner.bottom + 36, w: content});
+    connector(g, runner, records, id, LABEL.exported);
+    const kw = Math.max(104, Math.round(content * 0.3)), gap = 22, gy = records.bottom + 36;
+    const keys = node(g, COPY.keys, {x: left, y: gy, w: kw});
+    const grader = node(g, COPY.grader, {x: keys.right + gap, y: gy, w: content - kw - gap});
+    connector(g, records, grader, id, LABEL.toGrader, grader.cx);
+    wire(g, `M ${keys.right + 3} ${grader.port} H ${grader.x - 5}`, id);
+    const report = node(g, COPY.report, {x: left, y: Math.max(keys.bottom, grader.bottom) + 36, w: content});
+    connector(g, grader, report, id, LABEL.grades, grader.cx);
+    wire(g, `M ${left - 3} ${records.port} H ${rail} V ${report.port} H ${left - 5}`, id);
+    const ry = (records.port + report.port) / 2;
+    text(g, rail, ry, LABEL.toReport, {small: true, halo: true, attrs: {'text-anchor': 'middle', transform: `rotate(-90 ${rail} ${ry})`}});
+    const compare = node(g, COPY.compare, {x: left, y: report.bottom + 36, w: content});
+    connector(g, report, compare, id, LABEL.http);
+    finish(evaluation, w, compare.bottom + 4);
+  }
+
+  let last = 0;
+  function draw() {
+    const w = Math.floor(root.getBoundingClientRect().width);
+    if (!w || w === last) return;
+    last = w;
+    drawLive(w);
+    drawEval(w);
+  }
+  new ResizeObserver(draw).observe(root);
+  draw();
+})();
+</script>
+</body>
+</html>

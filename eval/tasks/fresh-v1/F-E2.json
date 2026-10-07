@@ -1,0 +1,17 @@
+{
+  "id": "F-E2",
+  "suite_version": "fresh-v1-draft",
+  "group": "E",
+  "blueprint": "F-E2",
+  "request": {
+    "task": "For each of these four PM postings, is an MBA required, preferred, mentioned only, or not mentioned? Quote the text that settles each case and name the part of the posting it appears in: d5fba9ad-bfe3-463d-8596-ba6ec2e147c7 (Partnerverse, Product Manager (Fintech), pai-w-2026-05-18); 042f710e-3848-4139-a2fb-fdf050daec77 (Waymo, Group Product Manager, Fleet & Event Response, pai-w-2026-05-18); 8c872e99-5eec-47f8-a614-da611bb5715d (Cook Medical, Global Product Manager - Endoscopy Medical Devices, pai-w-2026-05-18); 96d01492-288d-4e2a-89e6-b3ca19c96c99 (Speak, Lead Product Manager - Enterprise, pai-w-2026-07-06).",
+    "snapshot_ids": [
+      "pai-w-2026-05-18",
+      "pai-w-2026-07-06"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": false
+  },
+  "evidence_required": true
+}

@@ -1,0 +1,17 @@
+{
+  "id": "C2",
+  "suite_version": "final-v3-reviewed",
+  "group": "C",
+  "blueprint": "C2",
+  "request": {
+    "task": "Use the literal case-insensitive text filter 'AI agent' on PM postings in pai-w-2026-06-22 and pai-w-2026-08-31, across all configured sources. Report the complete raw and distinct captured-opening counts and source breakdowns in both windows, under the published identity rule. The later cohort is smaller. Does this establish a hiring decline? Explain relevant collection evidence and window lengths, and separate observations from possible technical causes.",
+    "snapshot_ids": [
+      "pai-w-2026-06-22",
+      "pai-w-2026-08-31"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}
