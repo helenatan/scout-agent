@@ -112,7 +112,7 @@ def main() -> int:
         print(f"| {var} | {split}{' (re-measured)' if fresh else ''} | {s['pass']}/{s['n']} | {s['rate']:.1%} |")
 
     print("\n## Fresh tasks (10 tasks x 3 attempts)\n")
-    print("| Model and tools | Original grader | Corrected grader | Cost per attempt | Median time | Cost per passing answer (original / corrected) |")
+    print("| Model and tools | Original grader | Corrected grader | Cost per attempt | Median latency | Cost per passing answer (original / corrected) |")
     print("|---|---|---|---|---|---|")
     for label, model, tv, (w1, w2), wc, wm, (pp1, pp2) in FRESH:
         s1 = stats(pick(rows, experiment="fresh-v1", model=model, tool_version=tv, grader="fresh-v1-grader-v1"))

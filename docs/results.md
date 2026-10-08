@@ -104,7 +104,7 @@ The grader has two parts: code checks facts with one right value (counts, postin
 judge models (Opus 5.5 and Fable 5.1) answer yes/no rubric items on the judgment points; both must say yes, and a
 disagreement goes to a person.
 
-| Model and tools | Original grader | Corrected grader | Cost per attempt | Median time | Cost per passing answer (original / corrected) |
+| Model and tools | Original grader | Corrected grader | Cost per attempt | Median latency | Cost per passing answer (original / corrected) |
 |---|---|---|---|---|---|
 | Sonnet 5.5 + final tools (v5) | 24/30 (80%) | 28/30 (93%) | $0.057 | 38 s | $0.071 / $0.061 |
 | Opus 5 + basic tools (v1) | 20/30 (67%) | 23/30 (77%) | $0.201 | 59 s | $0.302 / $0.263 |

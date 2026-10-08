@@ -50,8 +50,8 @@ before accepting it, with one repair allowed. Only the model and the tool versio
 
 The five tool versions keep the same three tool names and schemas and differ only in what each result carries:
 basic tools (v1), summary tools (v2), explicit caveats (v3), dated summary (v4) and final tools (v5).
-See [docs/tool-versions.md](docs/tool-versions.md), and [docs/how-scout-works](docs/how-scout-works/index.html) (open in a browser) for the
-architecture and the run lifecycle.
+See [docs/tool-versions.md](docs/tool-versions.md), and [docs/architecture.md](docs/architecture.md) for the
+component, sequence, state and evaluation diagrams.
 
 ## Quick start
 
@@ -95,7 +95,7 @@ Scout expects, and what an exact re-run would need.
 | `eval/tasks/final/`, `eval/tasks/fresh-v1/` | Task prompts, the fresh suite's two-part grader, freeze record and decisions |
 | `results/` | One row per graded attempt (pass/fail, cost, time, tokens; no answer text) and its provenance |
 | `scripts/` | Demo data, result verification, and the export script that produced `results/` |
-| `docs/` | Results, reproduction guide, tool versions, architecture pages, figures |
+| `docs/` | Results, reproduction guide, tool versions, architecture diagrams, figures |
 | `site/` | Static findings viewer for the September 27 evaluation; without the private data file it shows labeled sample data |
 | `tests/` | Unit and integration tests, runnable without an API key |
 
