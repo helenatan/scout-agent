@@ -51,7 +51,7 @@ before accepting it, with one repair allowed. Only the model and the tool versio
 The five tool versions keep the same three tool names and schemas and differ only in what each result carries:
 basic tools (v1), summary tools (v2), explicit caveats (v3), dated summary (v4) and final tools (v5).
 See [docs/tool-versions.md](docs/tool-versions.md), and [docs/architecture.md](docs/architecture.md) for the
-component, sequence, state and evaluation diagrams.
+five parts of a run, a step-by-step sequence, how runs end, and how an evaluation works.
 
 ## Quick start
 
