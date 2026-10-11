@@ -64,7 +64,7 @@ Every run goes `queued` → `running` → one of four end states, saved with a r
 | End state | Meaning | Reason codes |
 |---|---|---|
 | `completed` | The answer passed the runtime checks, first time or after the repair. Correctness is decided later by the grader. | `validated` |
-| `incomplete` | Scout stopped the run. | `validation_failed` (checks failed again after the repair), `budget_exhausted`, `deadline_exceeded` (including while queued), `stalled_execution` (a request over the input limit, or repeated tool failures) |
+| `incomplete` | Scout stopped the run. | `validation_failed` (checks failed again after the repair; repeated tool errors count as a failed check), `budget_exhausted`, `deadline_exceeded` (including while queued), `stalled_execution` (a request over the input limit, or 40 model requests without an accepted answer) |
 | `cancelled` | Someone cancelled the run. With a model request in flight, it shows `cancelling` until that request returns, and its cost is still recorded. | `cancel_requested` |
 | `failed` | The model provider, a tool, or Scout itself broke. | `provider_error`, `tool_error`, `internal_error` |
 
