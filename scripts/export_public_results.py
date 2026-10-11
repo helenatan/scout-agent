@@ -58,6 +58,8 @@ FRESH = [  # (dir, [(grade file, public grader name)])
      [("fresh_grades.v1-official.json", "fresh-v1-grader-v1"), ("fresh_grades.v2.json", "fresh-v1-grader-v2")]),
     (Path("eval/results/fresh-v1-opus-v5"),
      [("fresh_grades.v1.json", "fresh-v1-grader-v1"), ("fresh_grades.json", "fresh-v1-grader-v2")]),
+    (Path("eval/results/fresh-v1-sonnet-baseline"),
+     [("fresh_grades.v1.json", "fresh-v1-grader-v1"), ("fresh_grades.v2.json", "fresh-v1-grader-v2")]),
 ]
 R4_VARIANT_DIRS = {  # from experiments/haiku-lift/REPORT-round4.md ("Result dirs")
     "C": "experiments/haiku-lift/results", "V0": "experiments/haiku-lift/results",

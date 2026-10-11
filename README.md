@@ -9,31 +9,38 @@ the agent, its tools, the evaluation harness and every graded result from a stud
 
 **Can better tools make a cheaper Claude model reliable enough for the job?**
 
-On ten fresh research tasks, each attempted three times, Sonnet 5.5 and Opus 5 using the final tools reached the same
-pass rate: 80% under the grader frozen before the run, and 93% after fixing two grader bugs. Sonnet's estimated
-cost per attempt was about a quarter of Opus's. An earlier tool redesign had made Sonnet worse, and working out why
-produced the final tools.
+On a test set of ten new research tasks, each attempted three times, Sonnet 5.5 and Opus 5 using the final tools
+reached the same pass rate: 80% under the grader frozen before the run, and 93% after fixing two grader bugs. Sonnet's
+estimated cost per attempt was 25% of Opus's ($0.057 vs $0.225). On the tuning set, an earlier tool redesign had made
+Sonnet worse, and working out why produced the final tools. A setup added later showed Sonnet with basic tools already
+close on the test set, so on new questions the tools helped Opus more than Sonnet.
 
 ![Sonnet 5.5 pass rate by tool version](docs/images/fig3-sonnet-by-tool-version.png)
 
 ## Findings
 
-| Setup | Original 11 tasks | Fresh 10 tasks (original / corrected grader) | Cost per attempt |
+| Setup | Tuning set, 11 tasks | Test set, 10 new tasks (original / corrected grader) | Cost per attempt |
 |---|---|---|---|
 | Opus 5 + basic tools (v1), the reference | 98% (43/44) | 67% / 77% | $0.187 to $0.201 |
-| Sonnet 5.5 + basic tools (v1) | 77% (51/66) | | $0.042 |
+| Sonnet 5.5 + basic tools (v1) | 77% (51/66) | 77% / 80%, 1 pending (added later) | $0.042 to $0.049 |
 | Sonnet 5.5 + summary tools (v2) | 62% (41/66) | | $0.047 |
 | Sonnet 5.5 + final tools (v5) | 94% (62/66) | 80% / 93% | $0.054 to $0.057 |
 | Opus 5 + final tools (v5) | | 80% / 93% | $0.225 |
 | Haiku 4.5, best tuned version, held-out tasks | 28% (10/36) | | $0.049 |
+
+The two sets do different jobs and are never pooled: the tuning set is where the tools and the Haiku tuning were
+developed; the test set was written afterwards and never tuned against.
 
 - **Tools fixed facts, not judgment.** About half of Haiku's held-out failures in its best version were judgment errors,
   and no tool change moved them. Tuning raised Haiku's development score from 27% to 89% while held-out scores stayed
   between 28% and 33%.
 - **A tool redesign can help one model and hurt another.** The summary tools (v2) cost Sonnet 15 percentage points and
   Opus nothing: Sonnet trusted a summary that looked complete and stopped checking the collection record.
-- **With the same tools, the models tied.** On fresh tasks, Opus with the final tools matched Sonnet with the final
-  tools at about four times the cost. Moving Opus from basic to final tools added 13 to 17 percentage points.
+- **With the same tools, the models tied.** On the test set, Opus with the final tools matched Sonnet with the final
+  tools at about four times the cost per attempt. Moving Opus from basic to final tools added 13 to 17 percentage points.
+- **On new questions, Sonnet needed the tools less than the tuning set suggested.** Sonnet with basic tools passed 80%
+  of test-set attempts under the corrected grader (90% on a hand reading), against 93% with the final tools, and matched
+  or beat Opus with basic tools at 24% of its cost per attempt.
 
 Full tables, failure analysis and caveats: [docs/results.md](docs/results.md).
 Every number above is recomputed from [results/attempts.csv](results/attempts.csv) by `python scripts/verify_results.py`.
@@ -89,8 +96,8 @@ Scout expects, and what an exact re-run would need.
 | `scout/service/` | HTTP API, run engine, budget, evidence store, answer checks, Claude Code and API providers |
 | `scout/tools/` | The three data tools, the MCP server, and the tool versions (`pai_tools.py` holds v1 and v2; `tuned.py`, `dated.py`, `v5.py` hold v3 to v5) |
 | `scout/ui/` | Local web UI for one run and for comparing saved results |
-| `eval/run_original_suite.py` | Run one model and tool version on the original 11 tasks, then grade with grader v3 |
-| `eval/run_matrix.py` | General runner used for the fresh tasks and the final evaluation |
+| `eval/run_original_suite.py` | Run one model and tool version on the tuning set (original 11 tasks), then grade with grader v3 |
+| `eval/run_matrix.py` | General runner used for the test set and the final evaluation |
 | `eval/graders/original_v3/` | Deterministic grader for the original suite (frozen, hash-checked) |
 | `eval/tasks/final/`, `eval/tasks/fresh-v1/` | Task prompts, the fresh suite's two-part grader, freeze record and decisions |
 | `results/` | One row per graded attempt (pass/fail, cost, time, tokens; no answer text) and its provenance |
@@ -101,8 +108,8 @@ Scout expects, and what an exact re-run would need.
 
 ## Limits
 
-Eleven original tasks and ten fresh ones, three attempts each, all research over one snapshot of job postings.
-Sonnet's lead over Opus with basic tools on the fresh tasks is not statistically significant; "at least as good, at
+Eleven tasks in the tuning set and ten in the test set, three attempts each, all research over one snapshot of job
+postings. Sonnet's lead over Opus with basic tools on the test set is not statistically significant; "at least as good, at
 about a quarter of the cost per attempt" is the supported claim. All attempts ran through headless Claude Code on a
 subscription, so costs are list rates applied to reported tokens, not bills. A 50,000-token input limit applied to every
 attempt. See [docs/results.md](docs/results.md#limits).

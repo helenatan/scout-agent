@@ -66,10 +66,13 @@ HAIKU_R4 = [  # variant, split, label filter, expected passes, expected attempts
     ("V2", "dev", None, 52, 63), ("V2", "holdout", None, 12, 36),
     ("V3", "dev", None, 56, 63), ("V3", "holdout", None, 11, 36),
 ]
-FRESH = [  # label, model, tool version, expected passes (grader v1, v2), cost per attempt, median s, cost per pass (v1, v2)
-    ("Sonnet 5.5 + final tools (v5)", "sonnet-5.5", "v5", (24, 28), 0.057, 38, (0.071, 0.061)),
-    ("Opus 5 + basic tools (v1)", "opus-5", "v1", (20, 23), 0.201, 59, (0.302, 0.263)),
-    ("Opus 5 + final tools (v5)", "opus-5", "v5", (24, 28), 0.225, 42, (0.282, 0.241)),
+FRESH = [  # label, model, tool version, expected passes (grader v1, v2), pending human review (v1, v2),
+           # cost per attempt, median s, cost per pass (v1, v2)
+    ("Sonnet 5.5 + final tools (v5)", "sonnet-5.5", "v5", (24, 28), (0, 0), 0.057, 38, (0.071, 0.061)),
+    ("Opus 5 + basic tools (v1)", "opus-5", "v1", (20, 23), (0, 0), 0.201, 59, (0.302, 0.263)),
+    ("Opus 5 + final tools (v5)", "opus-5", "v5", (24, 28), (0, 0), 0.225, 42, (0.282, 0.241)),
+    # added 2026-10-10, after the main comparison
+    ("Sonnet 5.5 + basic tools (v1), added later", "sonnet-5.5", "v1", (23, 24), (1, 1), 0.049, 11, (0.064, 0.061)),
 ]
 
 
@@ -88,7 +91,7 @@ def main() -> int:
             bad.append(f"{name}: got {got}, documented {want}")
 
     v3 = pick(rows, grader="v3", suite="original-11")
-    print("## Original 11 tasks, grader v3\n")
+    print("## Tuning set (original 11 tasks), grader v3\n")
     print("| Model and tools | Passed | Pass rate | Cost per attempt |\n|---|---|---|---|")
     for label, f, wp, wn, wc in ORIGINAL:
         s = stats(pick(v3, **f))
@@ -111,20 +114,22 @@ def main() -> int:
         check(name + " attempts", s["n"], wn)
         print(f"| {var} | {split}{' (re-measured)' if fresh else ''} | {s['pass']}/{s['n']} | {s['rate']:.1%} |")
 
-    print("\n## Fresh tasks (10 tasks x 3 attempts)\n")
+    print("\n## Test set (10 new tasks x 3 attempts)\n")
     print("| Model and tools | Original grader | Corrected grader | Cost per attempt | Median latency | Cost per passing answer (original / corrected) |")
     print("|---|---|---|---|---|---|")
-    for label, model, tv, (w1, w2), wc, wm, (pp1, pp2) in FRESH:
+    for label, model, tv, (w1, w2), (q1, q2), wc, wm, (pp1, pp2) in FRESH:
         s1 = stats(pick(rows, experiment="fresh-v1", model=model, tool_version=tv, grader="fresh-v1-grader-v1"))
         s2 = stats(pick(rows, experiment="fresh-v1", model=model, tool_version=tv, grader="fresh-v1-grader-v2"))
         check(label + " v1 passes", s1["pass"], w1)
         check(label + " v2 passes", s2["pass"], w2)
-        check(label + " attempts", (s1["n"], s2["n"]), (30, 30))
+        check(label + " pending", (s1["pending"], s2["pending"]), (q1, q2))
+        check(label + " attempts", (s1["n"] + s1["pending"], s2["n"] + s2["pending"]), (30, 30))
         check(label + " cost", round(s2["cost"], 3), wc)
         check(label + " median s", round(s2["median_s"]), wm)
         check(label + " cost per pass v1", round(s1["per_pass"], 3), pp1)
         check(label + " cost per pass v2", round(s2["per_pass"], 3), pp2)
-        print(f"| {label} | {s1['pass']}/30 ({s1['rate']:.0%}) | {s2['pass']}/30 ({s2['rate']:.0%}) | ${s2['cost']:.3f} | "
+        pend = lambda s: f", {s['pending']} pending" if s["pending"] else ""
+        print(f"| {label} | {s1['pass']}/30 ({s1['pass'] / 30:.0%}{pend(s1)}) | {s2['pass']}/30 ({s2['pass'] / 30:.0%}{pend(s2)}) | ${s2['cost']:.3f} | "
               f"{s2['median_s']:.0f} s | ${s1['per_pass']:.3f} / ${s2['per_pass']:.3f} |")
 
     print("\n## Final evaluation, September 27 (official dual-reviewer grades, provisional)\n")

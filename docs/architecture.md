@@ -71,10 +71,10 @@ Every run goes `queued` → `running` → one of four end states, saved with a r
 ## 4 · How an evaluation works
 
 An evaluation runs every task under every setup through the same engine as an interactive question, then grades the
-saved answers. Numbers below are from the 10 new tasks.
+saved answers. Numbers below are from the test set (10 new tasks).
 
 1. **Freeze.** Tasks, answer keys and grader are fixed and hashed before the first attempt (`eval/tasks/fresh-v1/FREEZE.json`). The keys stay private.
-2. **Run.** Each task, under each setup, three times, through the HTTP API: 10 tasks × 3 setups × 3 = 90 attempts.
+2. **Run.** Each task, under each setup, three times, through the HTTP API: 10 tasks × 3 setups × 3 = 90 attempts, plus 30 for a fourth setup added later.
 3. **Record.** Each attempt saves its answer, the evidence it saw, its cost and its time.
 4. **Grade.** Code checks the facts with one right value; two judge models answer yes or no on the judgment points, both must say yes, and a disagreement goes to a person (`eval/tasks/fresh-v1/grade_fresh.py`).
 5. **Report.** Pass rate, cost per attempt, cost per passing answer and latency, per setup ([results.md](results.md)).

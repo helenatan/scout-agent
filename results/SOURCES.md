@@ -65,6 +65,7 @@ Tool version mapping (code design -> public): baseline v1, redesigned v2, tuned 
 - `eval/results/fresh-v1-confirm-sonnet-v5` [fresh-v1] - summary in file: {'pass': 24, 'fail': 6, 'pending': 0, 'part2_not_run': 0}. Files: fresh_grades.v1-official.json -> grader=fresh-v1-grader-v1, runs/*.json. Rows: 30. | summary in file: {'pass': 28, 'fail': 2, 'pending': 0, 'part2_not_run': 0}. Files: fresh_grades.v2.json -> grader=fresh-v1-grader-v2, runs/*.json. Rows: 30.
 - `eval/results/fresh-v1-confirm-opus-baseline` [fresh-v1] - summary in file: {'pass': 20, 'fail': 10, 'pending': 0, 'part2_not_run': 0}. Files: fresh_grades.v1-official.json -> grader=fresh-v1-grader-v1, runs/*.json. Rows: 30. | summary in file: {'pass': 23, 'fail': 7, 'pending': 0, 'part2_not_run': 0}. Files: fresh_grades.v2.json -> grader=fresh-v1-grader-v2, runs/*.json. Rows: 30.
 - `eval/results/fresh-v1-opus-v5` [fresh-v1] - summary in file: {'pass': 24, 'fail': 6, 'pending': 0, 'part2_not_run': 0}. Files: fresh_grades.v1.json -> grader=fresh-v1-grader-v1, runs/*.json. Rows: 30. | summary in file: {'pass': 28, 'fail': 2, 'pending': 0, 'part2_not_run': 0}. Files: fresh_grades.json -> grader=fresh-v1-grader-v2, runs/*.json. Rows: 30.
+- `eval/results/fresh-v1-sonnet-baseline` [fresh-v1] - summary in file: {'pass': 23, 'fail': 6, 'pending': 1, 'part2_not_run': 0}. Files: fresh_grades.v1.json -> grader=fresh-v1-grader-v1, runs/*.json. Rows: 30. | summary in file: {'pass': 24, 'fail': 5, 'pending': 1, 'part2_not_run': 0}. Files: fresh_grades.v2.json -> grader=fresh-v1-grader-v2, runs/*.json. Rows: 30.
 
 ## Grader v3 code used for recomputation
 
@@ -102,6 +103,8 @@ What was run: `autograde.grade_record(record, keys, graders('all'))` imported fr
 | fresh-v1 | opus-5 | v1 |  | fresh-v1-grader-v2 | 30 |
 | fresh-v1 | opus-5 | v5 |  | fresh-v1-grader-v1 | 30 |
 | fresh-v1 | opus-5 | v5 |  | fresh-v1-grader-v2 | 30 |
+| fresh-v1 | sonnet-5.5 | v1 |  | fresh-v1-grader-v1 | 30 |
+| fresh-v1 | sonnet-5.5 | v1 |  | fresh-v1-grader-v2 | 30 |
 | fresh-v1 | sonnet-5.5 | v5 |  | fresh-v1-grader-v1 | 30 |
 | fresh-v1 | sonnet-5.5 | v5 |  | fresh-v1-grader-v2 | 30 |
 | haiku-lift-r4 | haiku-4.5 | v2 | C | v3 | 99 |

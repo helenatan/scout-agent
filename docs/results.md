@@ -16,6 +16,9 @@ posting text.
 - **Terms.** A *task* is one question with a known answer; an *attempt* is one try at it; every setup tried every task
   three times. The *grader* scores each attempt against the answer key; the *pass rate* is the share of attempts it
   passed. Differences are in percentage points.
+- **Two task sets, two jobs.** The *tuning set* (the original 11 tasks) is where the tool versions and the Haiku tuning
+  were developed, so its numbers show progress. The *test set* (10 new tasks, written after all tuning and never tuned
+  against) shows how the agent handles new questions. Each set is reported on its own and never pooled.
 - **What counts as a pass.** Every required fact is right and the answer reports the data limits that change its
   conclusion (for example, a day a source returned zero records). A wording difference alone should not fail an answer;
   grader checks that did were treated as grader bugs.
@@ -26,7 +29,7 @@ posting text.
   (per million tokens: Haiku 4.5 $1/$5, Sonnet 5.5 $2/$10, Opus 5 $5/$25; cache write 1.25x, cache read 0.1x) applied
   to the tokens each attempt reported. Every attempt had a 50,000-token input limit per model request.
 
-## Original 11 tasks
+## Tuning set (original 11 tasks)
 
 Seven development tasks (R1 R3 E1 E3 C1 C2 I2) and four held-out tasks (R2 E2 C3 I1), graded by the deterministic
 [grader v3](../eval/graders/original_v3/) (no model calls).
@@ -70,7 +73,7 @@ v3 scored two attempts higher, which is within noise on 66 attempts. Its two mis
 duplicate groups covering eight records, not named); v5 names the groups, returns counts per source, and halved the
 tool calls on the comparison tasks *(from run traces)*. v5's four misses were strict wording checks on held-out tasks;
 three of the four answers were correct on a hand reading. v5 was built after reading failures on all 11 tasks, so the
-fresh suite below is its real test.
+test set below is its real test.
 
 ## Haiku tuning
 
@@ -92,9 +95,9 @@ V1 to V3 were flagged as overfitting; V0 is the honest result. In V0's held-out 
 errors (reading a zero as "no openings", accepting a claim that should have been rejected) that no tool change moved
 *(from run traces)*.
 
-## Fresh tasks
+## Test set (10 new tasks)
 
-The original tasks were spent once v5 was built after reading their failures. An agent wrote ten new tasks without
+The tuning set was spent once v5 was built after reading its failures. An agent wrote ten new tasks without
 access to the tools, the runs or the reports; the owner reviewed every answer key and decided the judgment calls
 ([DECISIONS.md](../eval/tasks/fresh-v1/DECISIONS.md)): where a careful reader could go either way, an answer passes if it
 states the choice it made. Tasks, keys and grader were frozen ([FREEZE.json](../eval/tasks/fresh-v1/FREEZE.json))
@@ -109,12 +112,17 @@ disagreement goes to a person.
 | Sonnet 5.5 + final tools (v5) | 24/30 (80%) | 28/30 (93%) | $0.057 | 38 s | $0.071 / $0.061 |
 | Opus 5 + basic tools (v1) | 20/30 (67%) | 23/30 (77%) | $0.201 | 59 s | $0.302 / $0.263 |
 | Opus 5 + final tools (v5) | 24/30 (80%) | 28/30 (93%) | $0.225 | 42 s | $0.282 / $0.241 |
+| Sonnet 5.5 + basic tools (v1), added later | 23/30 (77%, 1 pending) | 24/30 (80%, 1 pending) | $0.049 | 11 s* | $0.064 / $0.061 |
+
+*Measured on a different day from the other three rows; not comparable. Pass rates count a pending attempt as not passed.
 
 **Original and corrected grades.** The original grader is the one frozen before the run. Afterwards two bugs were found:
 it missed quotes stored in the structured part of an answer, and it could not read per-source counts written as `1/1`.
 Fixing them raised both models' scores, every comparison points the same way under both, and the corrected grader
-matches a hand reading of every answer in the Sonnet + v5 and Opus + v1 arms. A third known issue (a negated section phrase counted as a label vote) is
-unfixed and cost Opus + v5 one attempt. The judges never disagreed.
+matches a hand reading of every answer in the Sonnet + v5 and Opus + v1 arms. Two known issues are unfixed: a negated
+section phrase counted as a label vote (cost Opus + v5 one attempt), and counts stated in some sentence shapes, such as
+"20, all from greenhouse", are not read (cost Sonnet + v1 three attempts). Neither was fixed after the fact. The judges
+disagreed once, in the Sonnet + v1 arm; that attempt waits for human review.
 
 **What failed.** Opus with basic tools lost two whole tasks: on F-C2 it cited a list without reading every page and
 still failed after the one repair; on F-I1 it read full postings until a request passed the 50,000-token input limit.
@@ -124,6 +132,20 @@ near the input limit (peak requests about 35,000 tokens for Sonnet, 44,000 for O
 
 **Cost per passing answer.** The final tools made each Opus attempt about 12% more expensive but each passing answer
 about 8% cheaper, because fewer attempts failed.
+
+**Sonnet with basic tools, added later.** This setup ran on October 10, after the main comparison, to answer a question
+the three planned setups left open: how much of Sonnet's test-set result came from the final tools. It used the same
+tasks, grader files and judges. Of its 30 attempts, 24 passed under the corrected grader (23 under the original), 5
+failed and 1 is pending: the judges split on whether "overall coverage is reported complete", written next to a flagged
+zero-record day, claims complete collection. The five fails are three F-C1 answers with the right counts in wording the
+grader does not read (both judges passed their judgment items), one F-I1 answer missing a required verbatim quote, and
+one F-I1 attempt stopped at the 50,000-token input limit. On a hand reading, 27 of 30 passed, plus the pending one.
+
+So on new questions, Sonnet with basic tools came close to Sonnet with the final tools (24 vs 28 under the corrected
+grader, 27 vs 28 on a hand reading) and was at least as good as Opus with basic tools (24 vs 23; 27 vs 23 on a hand
+reading) at 24% of its cost per attempt. On the tuning set the final tools took Sonnet from 77% to 94%; on the test set
+most of that gain did not appear. Cost per passing answer under the corrected grader was the same for Sonnet with basic
+and final tools ($0.061).
 
 ## Final evaluation, September 27
 
@@ -143,13 +165,16 @@ Details and disclosures: [final-results.md](final-results.md).
 
 ## Limits
 
-- **Small task sets.** Eleven original tasks and ten fresh ones, three attempts each. On the fresh tasks, Sonnet's lead
+- **Small task sets.** Eleven tasks in the tuning set and ten in the test set, three attempts each. On the test set, Sonnet's lead
   over Opus with basic tools is not statistically significant (official 95% intervals about 63-90% vs 49-81%).
   "At least as good, at about a quarter of the cost per attempt" is the claim the data supports.
 - **One domain.** Every task is research over one snapshot of job postings. Tasks with more open-ended judgment may
   favor a larger model.
 - **Notional costs.** Subscription execution; list rates applied to reported tokens.
-- **Runtime limits.** The 50,000-token input limit applied to every model and cost Opus with basic tools one fresh task.
+- **Runtime limits.** The 50,000-token input limit applied to every model. On the test set it cost Opus with basic tools
+  one task and Sonnet with basic tools one attempt; neither model came near it with the final tools.
+- **A setup added later.** Sonnet with basic tools ran on the test set after the main comparison, and its result changed
+  how much of Sonnet's test-set score I attribute to the tools. It is labelled wherever it appears.
 - **Not compared.** Opus 5.5, the current Opus, is cheaper than Opus 5 ($4/$20 per million tokens), so the cost gap
   against it would be smaller.
 - **Shared records.** Some postings appear in more than one task, so task outcomes are not fully independent.
