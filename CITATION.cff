@@ -11,7 +11,8 @@ authors:
 type: software
 license: MIT
 repository-code: "https://github.com/helenatan/scout-agent"
-date-released: 2026-10-07
+version: 1.0.0
+date-released: 2026-10-12
 keywords:
   - AI agents
   - tool design
