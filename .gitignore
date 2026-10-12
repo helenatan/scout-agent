@@ -10,3 +10,7 @@ __pycache__/
 eval/results/
 eval/tasks/**/_*
 site/data.json
+
+# local research data and outputs
+m0/
+results/*.tmp

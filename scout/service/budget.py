@@ -9,6 +9,7 @@ RATE_CARD_VERSION = "2026-09-13"
 RATES: dict[str, tuple[float, float]] = {
     "claude-haiku-4-5-20251001": (1.0, 5.0),
     "claude-opus-5": (5.0, 25.0),
+    "claude-sonnet-5-5": (2.0, 10.0),  # rate card 2026-09-25 (model-pairs experiment)
 }
 CACHE_WRITE_MULT = 1.25
 CACHE_READ_MULT = 0.10

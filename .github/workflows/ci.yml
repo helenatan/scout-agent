@@ -1,4 +1,4 @@
-name: Public package checks
+name: checks
 on: [push, pull_request]
 permissions:
   contents: read
@@ -11,12 +11,22 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install -r requirements.lock
-      - run: python -m pytest tests -q
-      - run: python scripts/create_demo_data.py
-      - name: Verify fictional counts
+      - name: Create the fictional demo snapshot
+        run: python scripts/create_demo_data.py
+      - name: Tests (original-snapshot tests are skipped on demo data)
+        run: python -m pytest tests -q
+      - name: Every published number matches results/attempts.csv
+        run: python scripts/verify_results.py
+      - name: All five tool versions answer on the demo snapshot
         run: |
           python - <<'PY'
-          from scout.tools.pai_tools import PAIData, execute_tool
-          response = execute_tool(PAIData(), 'redesigned', 'search_job_postings', {'snapshot_id':'pai-2026-08','mode':'counts'})
-          assert response['counts'] == {'raw':3,'distinct':2}
+          from scout.tools.pai_tools import DESIGNS, PAIData, execute_tool
+          data = PAIData()
+          for design in DESIGNS:
+              args = {'snapshot_id': 'pai-2026-08'} | ({} if design == 'baseline' else {'mode': 'counts'})
+              r = execute_tool(data, design, 'search_job_postings', args)
+              assert 'error' not in r, (design, r)
+              if design != 'baseline':
+                  assert r['counts'] == {'raw': 3, 'distinct': 2}, (design, r['counts'])
+          print('ok', DESIGNS)
           PY

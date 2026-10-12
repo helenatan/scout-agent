@@ -38,7 +38,7 @@ class Settings:
     max_concurrent_runs: int = 2
     tool_error_streak: int = 3
     retry_wait_seconds: float = 2.0
-    thinking: dict[str, dict | None] = field(default_factory=lambda: {"haiku": None, "opus": {"type": "adaptive"}})
+    thinking: dict[str, dict | None] = field(default_factory=lambda: {"haiku": None, "opus": {"type": "adaptive"}, "sonnet": {"type": "adaptive"}})
     tool_version: str = TOOL_VERSION
 
     def public(self, model_key: str, provider_name: str) -> dict:

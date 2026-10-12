@@ -1,0 +1,16 @@
+{
+  "id": "E2",
+  "suite_version": "final-v3-reviewed",
+  "group": "E",
+  "blueprint": "E2",
+  "request": {
+    "task": "For posting 4efae7c8-ce81-42d1-9207-319823d8d929 (Cisco Senior Staff Product Manager - Splunk AI Foundations, pai-2026-05), is prior experience building AI-agent systems required, preferred, or merely mentioned? Explain how the role's responsibilities and general AI/ML qualifications differ from agent-specific candidate qualifications. Cite the responsibility and the qualification context that settle your classification.",
+    "snapshot_ids": [
+      "pai-2026-05"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": false
+  },
+  "evidence_required": true
+}

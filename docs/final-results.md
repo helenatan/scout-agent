@@ -1,6 +1,14 @@
 # Final evaluation results (provisional)
 
-Label `final-2026-09-27-cc-v1`, generated 2026-09-28. **Provisional: 40 of 119 completed answers await human review.** No recommendation is made until the queue is complete; pending answers are neither passes nor failures.
+> **Context.** This is the September 27 final evaluation of Haiku 4.5 and Opus 5 with basic and summary tools, under its
+> official dual-reviewer grading. It is one part of the study; the same attempts graded with grader v3, and the later
+> Sonnet and fresh-task experiments, are in [results.md](results.md).
+>
+> **How this relates to the headline.** The study's findings and the numbers in the README use grader v3 for these
+> attempts and the fresh-task graders for the test set. They do not depend on the dual-reviewer grading below, which is
+> kept as a record and stays provisional.
+
+Label `final-2026-09-27-cc-v1`, generated 2026-09-28. **Provisional: 40 of 119 completed answers await human review.** This grading makes no recommendation on its own; pending answers are neither passes nor failures.
 
 ## Design
 

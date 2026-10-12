@@ -1,0 +1,17 @@
+{
+  "id": "F-C2",
+  "suite_version": "fresh-v1-draft",
+  "group": "C",
+  "blueprint": "F-C2",
+  "request": {
+    "task": "Using the literal case-insensitive text filter 'e-commerce' on PM postings across all configured sources, compare pai-w-2026-07-27 with pai-w-2026-08-03. Report raw records and distinct openings under the published identity rule and per-source breakdowns for both weeks, and the absolute change in distinct openings. Did demand for e-commerce product managers dry up in early August?",
+    "snapshot_ids": [
+      "pai-w-2026-07-27",
+      "pai-w-2026-08-03"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

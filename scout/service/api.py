@@ -190,7 +190,7 @@ def build_app(store: Store | None = None, provider=None, tool_client_factory=Non
 def _health_settings(eng: RunEngine) -> dict:
     out = eng.settings.public("haiku", getattr(eng.provider, "name", "anthropic"))
     if getattr(eng.provider, "executes_loop", False):
-        out["execution"] = {m: eng.provider.public(m) for m in ("haiku", "opus")}
+        out["execution"] = {m: eng.provider.public(m) for m in ("haiku", "opus", "sonnet")}
         out["prompt_caching"] = "managed by Claude Code"
     return out
 

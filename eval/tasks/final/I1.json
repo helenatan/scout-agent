@@ -1,0 +1,17 @@
+{
+  "id": "I1",
+  "suite_version": "final-v3-reviewed",
+  "group": "I",
+  "blueprint": "I1",
+  "request": {
+    "task": "Between pai-2026-07 and pai-2026-08, which company had the larger increase in distinct captured PM postings explicitly requiring prior hands-on experience building or shipping AI-agent systems: PermitFlow or Scale AI? Use each company filter with literal text filter 'agent'. Retrieve the complete cohorts, apply the published identity rule, classify the agent-specific qualifications, and cite the settling evidence. Report raw and distinct cohort counts, qualifying distinct counts, absolute changes, and collection limitations. Responsibilities, general AI/ML experience, familiarity and preferred qualifications alone do not establish this requirement.",
+    "snapshot_ids": [
+      "pai-2026-07",
+      "pai-2026-08"
+    ],
+    "max_cost_usd": 1.5,
+    "deadline_seconds": 400,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}
