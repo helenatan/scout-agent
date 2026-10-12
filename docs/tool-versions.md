@@ -25,6 +25,291 @@ print(execute_tool(data, "v5", "search_job_postings", {"snapshot_id": "pai-2026-
 
 Or serve one version over MCP: `python -m scout.tools.mcp_server --design v5`.
 
+## One request, five responses
+
+The same request in every version: count the PM postings that mention "AI agent" in the week of July 13, 2026 (`snapshot_id="pai-w-2026-07-13"`, `text="AI agent"`; v1 has no counts mode, so it gets the first page of records). That week includes a silent gap: jsearch reported success on July 17 but fetched zero records.
+
+These are real responses from the study's snapshot, generated with `execute_tool`. Fields every response repeats (the request filters, a query fingerprint, the dataset version, the identity rule and the aggregation status) are left out, and long lists are shortened.
+
+### v1: Basic tools (`baseline`)
+
+The first page of matching postings, with no counts and nothing about collection. To count, the model pages through every result; to learn about data gaps, it must call `get_dataset_context` for the week.
+
+```json
+{
+  "total_count": 8,
+  "returned": 8,
+  "offset": 0,
+  "next_cursor": null,
+  "postings": [
+    {
+      "posting_id": "5fb33638-3c2d-4b63-b057-d2de92e868e2",
+      "source": "ashby",
+      "company": "OpenAI",
+      "title": "Product Manager, Codex Security Controls & Partner Interfaces",
+      "company_normalized": "openai",
+      "location": "Remote - US",
+      "first_seen": "2026-07-13",
+      "last_seen": "2026-09-05",
+      "is_us": true,
+      "description_chars": 9416
+    },
+    {
+      "posting_id": "8595a4ab-ec3d-4295-80f9-219368cd787a",
+      "source": "greenhouse",
+      "company": "Scale AI",
+      "title": "Forward Deployed Product Manager, Public Sector",
+      "company_normalized": "scale ai",
+      "location": "New York, NY; Washington, DC",
+      "first_seen": "2026-07-14",
+      "last_seen": "2026-09-05",
+      "is_us": true,
+      "description_chars": 11261
+    },
+    "... 6 more postings in the same shape"
+  ]
+}
+```
+
+### v2: Summary tools (`redesigned`)
+
+One call returns the counts (`mode="counts"`). The `collection_context` says jsearch had one day with zero records, but not which day, and points to `get_dataset_context` for the details. Note that `overall_status` still says `complete`.
+
+```json
+{
+  "mode": "counts",
+  "counts": {
+    "raw": 8,
+    "distinct": 7
+  },
+  "duplicate_groups": {
+    "count": 1,
+    "records_in_groups": 2,
+    "cursor": "<cursor for mode=duplicate_groups>"
+  },
+  "collection_context": {
+    "snapshot_id": "pai-w-2026-07-13",
+    "window": {
+      "start": "2026-07-13",
+      "end": "2026-07-19"
+    },
+    "overall_status": "complete",
+    "relevance": "unknown",
+    "sources_in_scope": [
+      "jsearch",
+      "greenhouse",
+      "ashby"
+    ],
+    "issues": [
+      {
+        "source": "jsearch",
+        "status": "complete",
+        "days_expected": 7,
+        "days_ok_zero_records": 1,
+        "days_partial": 0,
+        "days_failed": 0,
+        "days_missing": 0,
+        "failed_boards": []
+      }
+    ],
+    "sources_without_issues": [
+      "greenhouse",
+      "ashby"
+    ],
+    "details": "get_dataset_context"
+  }
+}
+```
+
+### v3: Explicit caveats (`tuned`)
+
+The v2 response with `limitations_to_report` added at the top: each data gap written as a sentence the model can copy into its answer.
+
+```json
+{
+  "limitations_to_report": [
+    "pai-w-2026-07-13 covers 2026-07-13 to 2026-07-19 (7 days).",
+    "Possible silent gap: jsearch reported status ok but fetched 0 records on 2026-07-17 of pai-w-2026-07-13. Do not treat 'ok' as complete collection; the cause is not recorded, so do not state one as fact.",
+    "Counts are postings first captured in this window from the configured sources: they are not live vacancies, all jobs open at the time, or a measure of hiring demand."
+  ],
+  "mode": "counts",
+  "counts": {
+    "raw": 8,
+    "distinct": 7
+  },
+  "duplicate_groups": {
+    "count": 1,
+    "records_in_groups": 2,
+    "cursor": "<cursor for mode=duplicate_groups>"
+  },
+  "collection_context": {
+    "snapshot_id": "pai-w-2026-07-13",
+    "window": {
+      "start": "2026-07-13",
+      "end": "2026-07-19"
+    },
+    "overall_status": "complete",
+    "relevance": "unknown",
+    "sources_in_scope": [
+      "jsearch",
+      "greenhouse",
+      "ashby"
+    ],
+    "issues": [
+      {
+        "source": "jsearch",
+        "status": "complete",
+        "days_expected": 7,
+        "days_ok_zero_records": 1,
+        "days_partial": 0,
+        "days_failed": 0,
+        "days_missing": 0,
+        "failed_boards": []
+      }
+    ],
+    "sources_without_issues": [
+      "greenhouse",
+      "ashby"
+    ],
+    "details": "get_dataset_context"
+  }
+}
+```
+
+### v4: Dated summary (`dated`)
+
+The v2 response, but `collection_context` now lists each issue day with its date (`2026-07-17`), the window length and any window notes. No sentences.
+
+```json
+{
+  "mode": "counts",
+  "counts": {
+    "raw": 8,
+    "distinct": 7
+  },
+  "duplicate_groups": {
+    "count": 1,
+    "records_in_groups": 2,
+    "cursor": "<cursor for mode=duplicate_groups>"
+  },
+  "collection_context": {
+    "snapshot_id": "pai-w-2026-07-13",
+    "window": {
+      "start": "2026-07-13",
+      "end": "2026-07-19",
+      "days": 7,
+      "nominal_start": "2026-07-13",
+      "nominal_end": "2026-07-19",
+      "nominal_days": 7
+    },
+    "overall_status": "complete",
+    "sources": {
+      "jsearch": {
+        "status": "complete",
+        "days_expected": 7,
+        "days_ok_zero_records": 1,
+        "days_partial": 0,
+        "days_failed": 0,
+        "days_missing": 0,
+        "failed_boards": [],
+        "issue_days": [
+          {
+            "date": "2026-07-17",
+            "issue": "ok_zero_records",
+            "detail": "status ok but 0 records fetched"
+          }
+        ]
+      },
+      "greenhouse": "... same shape, no issue days",
+      "ashby": "... same shape, no issue days"
+    },
+    "window_notes": []
+  }
+}
+```
+
+### v5: Final tools (`v5`)
+
+v3's sentences and v4's dated context together, plus counts per source (`by_source`) and the name of each duplicate group.
+
+```json
+{
+  "limitations_to_report": [
+    "pai-w-2026-07-13 covers 2026-07-13 to 2026-07-19 (7 days).",
+    "Possible silent gap: jsearch reported status ok but fetched 0 records on 2026-07-17 of pai-w-2026-07-13. Do not treat 'ok' as complete collection; the cause is not recorded, so do not state one as fact.",
+    "Counts are postings first captured in this window from the configured sources: they are not live vacancies, all jobs open at the time, or a measure of hiring demand."
+  ],
+  "mode": "counts",
+  "counts": {
+    "raw": 8,
+    "distinct": 7
+  },
+  "duplicate_groups": {
+    "count": 1,
+    "records_in_groups": 2,
+    "cursor": "<cursor for mode=duplicate_groups>",
+    "groups": [
+      {
+        "company": "elastic",
+        "title": "principal product manager agents and context - elasticsearch",
+        "records": 2,
+        "sources": [
+          "greenhouse"
+        ]
+      }
+    ],
+    "groups_truncated": false
+  },
+  "collection_context": {
+    "snapshot_id": "pai-w-2026-07-13",
+    "window": {
+      "start": "2026-07-13",
+      "end": "2026-07-19",
+      "days": 7,
+      "nominal_start": "2026-07-13",
+      "nominal_end": "2026-07-19",
+      "nominal_days": 7
+    },
+    "overall_status": "complete",
+    "sources": {
+      "jsearch": {
+        "status": "complete",
+        "days_expected": 7,
+        "days_ok_zero_records": 1,
+        "days_partial": 0,
+        "days_failed": 0,
+        "days_missing": 0,
+        "failed_boards": [],
+        "issue_days": [
+          {
+            "date": "2026-07-17",
+            "issue": "ok_zero_records",
+            "detail": "status ok but 0 records fetched"
+          }
+        ]
+      },
+      "greenhouse": "... same shape, no issue days",
+      "ashby": "... same shape, no issue days"
+    },
+    "window_notes": []
+  },
+  "by_source": {
+    "jsearch": {
+      "raw": 3,
+      "distinct": 3
+    },
+    "greenhouse": {
+      "raw": 4,
+      "distinct": 3
+    },
+    "ashby": {
+      "raw": 1,
+      "distinct": 1
+    }
+  }
+}
+```
+
 ## Haiku-only extras
 
 The Haiku tuning experiment also tried changes outside the tools. They are not tool versions and are not in this
