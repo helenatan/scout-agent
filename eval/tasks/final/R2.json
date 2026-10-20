@@ -1,0 +1,16 @@
+{
+  "id": "R2",
+  "suite_version": "final-v3-reviewed",
+  "group": "R",
+  "blueprint": "R2",
+  "request": {
+    "task": "In snapshot pai-2026-05, consider every PM posting returned by company filter 'Databricks'. Report the number of raw records and distinct openings under the published identity rule. List every multi-record duplicate group with its record IDs and sources, and explain why raw and distinct counts differ. Consider the entire matching set, not only the first page.",
+    "snapshot_ids": [
+      "pai-2026-05"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

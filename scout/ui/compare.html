@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scout Agent · Compare configurations</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <a class="brand" href="index.html">Scout Agent</a>
+  <nav><a href="index.html">Submit</a><a href="run.html">Run detail</a><a href="compare.html" class="active">Compare configurations</a></nav>
+</header>
+<main id="app"><p class="muted">Loading saved results…</p></main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const usd = x => x == null || Number.isNaN(x) ? 'undefined' : '$' + Number(x).toFixed(3);
+const pct = x => x == null ? '—' : (100*x).toFixed(0) + '%';
+const NAMES = {A: 'A · Haiku + baseline', B: 'B · Opus + baseline', C: 'C · Haiku + redesigned', D: 'D · Opus + redesigned'};
+
+async function main() {
+  const idx = (await (await fetch('/results/index.json')).json()).results;
+  if (!idx.length) { $('#app').innerHTML = '<section><h1>Compare configurations</h1><p>No saved evaluation results yet. Run <code>eval/run_matrix.py</code>, <code>eval/grade.py</code>, and <code>eval/report.py</code>, or convert the M0 pilot with <code>eval/import_m0_pilot.py</code>.</p></section>'; return; }
+  const label = new URLSearchParams(location.search).get('label') || idx[0].label;
+  const rep = await (await fetch(`/results/${label}/report.json`)).json();
+  render(rep, idx, label);
+}
+
+function render(rep, idx, label) {
+  const m = rep.meta, q = m.qualification || {};
+  const cfgs = rep.configurations;
+  const kindBadge = m.kind === 'final' ? '<span class="badge final">FINAL RESULTS</span>' : `<span class="badge pilot">${esc((m.kind||'pilot').toUpperCase())} DATA — not the final evaluation</span>`;
+  const picker = `<select id="pick">${idx.map(i => `<option value="${i.label}" ${i.label===label?'selected':''}>${esc(i.title)} (${i.kind})</option>`).join('')}</select>`;
+  const rows = ['A','B','C','D'].filter(k => cfgs[k]).map(k => { const c = cfgs[k]; return `<tr class="${c.qualifies ? 'ok' : 'no'}">
+    <td><b>${NAMES[k]}</b></td><td>${c.passes}/${c.launched} (${pct(c.success_rate)})${c.grades_pending ? ` <span class="warn" title="${c.grades_pending} run(s) await human review">provisional</span>` : ''}</td>
+    <td>${c.within_limits}/${c.launched} (${pct(c.success_within_limits_rate)})</td>
+    <td>${usd(c.cost_per_success_usd)}${c.cost_per_success_ci ? `<div class="muted">CI ${usd(c.cost_per_success_ci[0])}–${usd(c.cost_per_success_ci[1])}</div>` : ''}</td>
+    <td>${c.median_s?.toFixed(0)}s / ${c.p90_s?.toFixed(0)}s${c.deadline_misses ? `<div class="warn">${c.deadline_misses} deadline miss(es)</div>` : ''}</td>
+    <td>${usd(c.total_cost_usd)}</td>
+    <td>${c.qualifies ? '<b>yes</b>' : 'no'}<div class="muted">${(c.reasons||[]).map(esc).join('; ')}</div></td></tr>`; }).join('');
+  const contrasts = (rep.contrasts||[]).map(c => `<tr><td><b>${c.id}</b></td><td>${esc(c.question)}</td><td>${(c.pass_diff*100).toFixed(0)} pts</td><td>${c.ci ? `[${(c.ci[0]*100).toFixed(0)}, ${(c.ci[1]*100).toFixed(0)}]` : '—'}</td><td>${c.cost_diff_per_run != null ? (c.cost_diff_per_run>=0?'+':'') + usd(c.cost_diff_per_run) : '—'}</td><td><span class="lab ${c.label}">${c.label}</span></td></tr>`).join('');
+  const groups = rep.groups ? Object.entries(rep.groups).map(([g, v]) => `<tr><td><b>${g}</b> <span class="muted">${v.tasks.join(', ')}</span></td>${['A','B','C','D'].map(k => `<td>${v[k] != null ? pct(v[k]) : '—'}</td>`).join('')}</tr>`).join('') : '';
+  const tasks = rep.by_task ? Object.entries(rep.by_task).map(([t, v]) => `<tr><td>${t} <span class="muted">${v.group}</span></td>${['A','B','C','D'].map(k => `<td>${v[k] ? `${pct(v[k].pass_rate)} <span class="muted">n=${v[k].n}, ${usd(v[k].mean_cost)}</span>` : '—'}</td>`).join('')}</tr>`).join('') : '';
+  const reps = rep.representative_runs ? Object.entries(rep.representative_runs).map(([k, ids]) => `<li>${NAMES[k]}: ${ids.map(i => `<a href="/results/${label}/runs/${i}.json"><code>${i}</code></a>`).join(' ')}</li>`).join('') : '';
+  const rec = rep.recommendation || {};
+  $('#app').innerHTML = `
+  <section class="head">
+    <h1>Which option meets the requirements at the lowest cost?</h1>
+    <div class="meta">${picker} ${kindBadge}</div>
+    <p class="note">${esc(m.title)} · ${m.n_tasks} task(s) × ${m.reps} repetition(s) · suite ${esc(m.suite_version)} · generated ${esc(m.generated_at)}. ${(m.notes||[]).map(esc).join(' ')}</p>
+  </section>
+  <section class="reco ${rec.confidence||''}">
+    <h2>Recommendation <span class="lab ${rec.confidence||''}">${esc(rec.confidence||'')}</span></h2>
+    <p>${esc(rec.text||'No recommendation.')}</p>
+    <p class="muted">Requirements used: quality floor ${pct(q.quality_floor)} (${esc(q.rule||'observed rate')}), time target ${q.time_target_s}s median${q.source ? ` · source: ${esc(q.source)}` : ''}. Extra tool work for the redesign: ${esc(rep.implementation_note||'—')}</p>
+  </section>
+  <section>
+    <h2>Three decision measures</h2>
+    <table><thead><tr><th>configuration</th><th>answer success</th><th>success within limits</th><th>cost per success</th><th>time median / p90</th><th>total cost</th><th>qualifies</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="muted">Success = offline grade pass ÷ all launched runs. Cost per success = total operating cost ÷ passes (undefined with zero passes). Intervals: bootstrap over whole tasks (${rep.bootstrap?.resamples} resamples, seed ${rep.bootstrap?.seed}).</p>
+  </section>
+  <section>
+    <h2>What each comparison tells us</h2>
+    <table><thead><tr><th></th><th>question</th><th>pass difference</th><th>95% task-bootstrap CI</th><th>cost difference per run</th><th>label</th></tr></thead><tbody>${contrasts}</tbody></table>
+  </section>
+  <section>
+    <h2>By capability group and task</h2>
+    <table><thead><tr><th>group</th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>${groups}</tbody></table>
+    <details><summary>Per task</summary><table><thead><tr><th>task</th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>${tasks}</tbody></table></details>
+  </section>
+  <section>
+    <h2>Reconciliation and provenance</h2>
+    <p>Records total ${usd(rep.reconciliation?.records_total_usd)} · per-request total ${usd(rep.reconciliation?.requests_total_usd)} · ${rep.reconciliation?.ok ? '<b>reconciles</b>' : '<span class="warn">does not reconcile</span>'}${rep.reconciliation?.unsettled ? ` · <span class="warn">${rep.reconciliation.unsettled} unsettled charge(s)</span>` : ''}</p>
+    <ul>${reps}</ul>
+    ${rep.report_link ? `<p><a href="${esc(rep.report_link)}">Findings report</a></p>` : ''}
+  </section>`;
+  $('#pick').onchange = e => location.search = `?label=${e.target.value}`;
+}
+main();
+</script>
+</body>
+</html>

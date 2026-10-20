@@ -1,0 +1,17 @@
+{
+  "id": "R3",
+  "suite_version": "final-v3-reviewed",
+  "group": "R",
+  "blueprint": "R3",
+  "request": {
+    "task": "Compare the PM postings returned by company filters 'Abbott Laboratories' and 'Cox Automotive' in pai-2026-06 and pai-2026-07. Which company had the larger absolute increase in distinct captured openings under the published identity rule? Report each company's raw and distinct counts in both windows, absolute change and percentage growth. Explain why absolute and percentage growth can rank them differently, and qualify the collection scope.",
+    "snapshot_ids": [
+      "pai-2026-06",
+      "pai-2026-07"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

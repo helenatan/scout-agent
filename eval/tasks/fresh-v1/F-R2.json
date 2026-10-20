@@ -1,0 +1,16 @@
+{
+  "id": "F-R2",
+  "suite_version": "fresh-v1-draft",
+  "group": "R",
+  "blueprint": "F-R2",
+  "request": {
+    "task": "How many PM postings mentioning 'subscription' (literal case-insensitive text filter, all configured sources) were captured in pai-w-2026-07-13? Give the raw record count, the number of distinct openings under the published identity rule and the per-source breakdown, and list the records with their posting ids and companies.",
+    "snapshot_ids": [
+      "pai-w-2026-07-13"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

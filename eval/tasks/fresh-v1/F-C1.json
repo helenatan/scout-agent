@@ -1,0 +1,17 @@
+{
+  "id": "F-C1",
+  "suite_version": "fresh-v1-draft",
+  "group": "C",
+  "blueprint": "F-C1",
+  "request": {
+    "task": "Anduril's captured PM postings (company filter 'Anduril') fell sharply from pai-w-2026-05-18 to pai-w-2026-06-01. Report raw records and distinct openings under the published identity rule, with per-source breakdowns, for both weeks. Does this show that Anduril slowed its PM hiring? Explain what the comparison does and does not support.",
+    "snapshot_ids": [
+      "pai-w-2026-05-18",
+      "pai-w-2026-06-01"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

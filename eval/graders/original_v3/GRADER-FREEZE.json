@@ -1,0 +1,55 @@
+{
+ "current": "v3",
+ "v1": {
+  "frozen_at": "2026-09-29T05:50:53.647195+00:00",
+  "note": "Frozen before any haiku-lift model run (DEV grader, check command). grader_holdout.py delivered and hashed after the Phase 1 A/C DEV runs, before any tuning.",
+  "sha256": {
+   "check.py": "4217e2569555ff57018f36f00c376e835b528a4c4c0eea17e8063e4f4ed19bbe",
+   "grader/common.py": "156a6e616fa0bd7799883d7d0337091b3b352e00111e9f92bf07089036cc72f5",
+   "grader/grader_dev.py": "eb1b389c8d138c9dfde7b31337de656ede172bc041457d4e0496d430e62110b8",
+   "grader/autograde.py": "e5cb9d9e064bbdbdb45de47b9abc4daed5a539d08e57460288213766ee945946",
+   "eval/run_matrix.py": "9005b859b69d479f93dec8ffae172e4c3876e67ca222cf2a45dc2599eb756b02",
+   "grader/grader_holdout.py": "a77ad3e0eed16d31370972e5b370b9d6d387fc72f523fe83512f1299bad07119"
+  },
+  "dev_calibration": "final-2026-09-27-cc-v1 DEV runs (84): agrees with dual-agent consensus on 80/80 consensus cases (47 P, 33 F); 4 split cases (3 graded P, 1 F).",
+  "holdout_calibration": "Built blind by a separate agent; on final-2026-09-27-cc-v1 holdout runs (48): consensus P 24/24 graded P, consensus F 21/21 graded F, 3 split cases graded F. Operator has not opened grader_holdout.py."
+ },
+ "v2": {
+  "frozen_at": "2026-09-29T18:13:24.374896+00:00",
+  "note": "Owner request 2026-09-29: fix the two reported DEV false-negative classes (E1 'mentioned'/verb-form labels scoped to single-company units; number words and window-id-plus-dash in count checks). Only grader_dev.py changed; common.py, autograde.py, check.py and grader_holdout.py are byte-identical to v1. v1 files kept in grader/v1-frozen/.",
+  "sha256": {
+   "check.py": "4217e2569555ff57018f36f00c376e835b528a4c4c0eea17e8063e4f4ed19bbe",
+   "grader/common.py": "156a6e616fa0bd7799883d7d0337091b3b352e00111e9f92bf07089036cc72f5",
+   "grader/grader_dev.py": "2136634611b39ab2ba053957b844605713e8c45e99695804a096ed66dc3fc177",
+   "grader/autograde.py": "e5cb9d9e064bbdbdb45de47b9abc4daed5a539d08e57460288213766ee945946",
+   "eval/run_matrix.py": "9005b859b69d479f93dec8ffae172e4c3876e67ca222cf2a45dc2599eb756b02",
+   "grader/grader_holdout.py": "a77ad3e0eed16d31370972e5b370b9d6d387fc72f523fe83512f1299bad07119"
+  },
+  "dev_calibration": "final-2026-09-27-cc-v1 DEV runs (84): unchanged from v1, 80/80 consensus agreement (47 P, 33 F); frozen Opus B/D 21/21 each.",
+  "regression": "All 683 DEV runs on disk re-graded (work/r2/grades-v1.json vs grades-v2.json): 14 verdict changes, all fail->pass (13 E1, 1 I2), each read by hand and judged correct (one borderline: Google labelled 'implied by role description, not explicitly required'); 0 pass->fail."
+ },
+ "sha256": {
+  "check.py": "4217e2569555ff57018f36f00c376e835b528a4c4c0eea17e8063e4f4ed19bbe",
+  "grader/common.py": "7783050f4f093cad0ba4c31e3d905ece10e674dfa6a20d70f36a17da1bdbe042",
+  "grader/grader_dev.py": "3134075564ba07c40884df37fa80c5bbc230db5d37f6c6fe3e992826d3c5f298",
+  "grader/autograde.py": "e5cb9d9e064bbdbdb45de47b9abc4daed5a539d08e57460288213766ee945946",
+  "eval/run_matrix.py": "9005b859b69d479f93dec8ffae172e4c3876e67ca222cf2a45dc2599eb756b02",
+  "grader/grader_holdout.py": "2af58313ea383f82cfa19127b661fa955341921a82c8190a9bcaeb44fc0274e2"
+ },
+ "v3": {
+  "frozen_at": "2026-09-30T10:58:27.949402+00:00",
+  "note": "Owner request 2026-09-29 23:37: fix the round-3 reported false-negative classes G1-G7. grader_dev.py + common.py by the operator (flip review in work/r4/v3-flips.json); grader_holdout.py by one blind subagent (operator never opened it). v2 files in grader/v2-frozen/.",
+  "sha256": {
+   "check.py": "4217e2569555ff57018f36f00c376e835b528a4c4c0eea17e8063e4f4ed19bbe",
+   "grader/common.py": "7783050f4f093cad0ba4c31e3d905ece10e674dfa6a20d70f36a17da1bdbe042",
+   "grader/grader_dev.py": "3134075564ba07c40884df37fa80c5bbc230db5d37f6c6fe3e992826d3c5f298",
+   "grader/autograde.py": "e5cb9d9e064bbdbdb45de47b9abc4daed5a539d08e57460288213766ee945946",
+   "eval/run_matrix.py": "9005b859b69d479f93dec8ffae172e4c3876e67ca222cf2a45dc2599eb756b02",
+   "grader/grader_holdout.py": "2af58313ea383f82cfa19127b661fa955341921a82c8190a9bcaeb44fc0274e2"
+  },
+  "dev_calibration": "final-2026-09-27-cc-v1 DEV runs (84): 80/80 consensus agreement unchanged (47 P, 33 F; splits 3 P, 1 F); Opus B/D 21/21; Haiku A 3, C 5 unchanged.",
+  "dev_regression": "1460 DEV runs on disk: 967 -> 1008 passes; 45 fail->pass (E1 26, C1 15, I2 4) and 4 pass->fail (I2), all hand-read.",
+  "holdout_calibration": "Blind subagent: consensus P 24/24 graded P, consensus F 21/21 graded F, 3 splits graded F; Opus B 12/12, D 12/12 (v2 and v3).",
+  "holdout_regression": "Blind subagent: 96 holdout runs on disk, 0 verdict changes v2->v3 (5 runs change at check level only, all still failing on other checks)."
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "version":"dual-agent-human-audit-v1",
+ "status":"owner_approved_before_final_runs",
+ "authorization":"User accepted agent grading plus human disagreements/sample on September 27, 2026.",
+ "supersedes":"The human_answer_review_required flag in archived final-v3-reviewed rubrics is superseded only for concordant agent judgments outside the sample and expansion set. Original keys and rubric content remain unchanged.",
+ "reviewers":["reviewer-a","reviewer-b"],
+ "independence":"Two fresh Codex agents, no implementation history, no access to one another's judgments or model/configuration/cost labels. Same underlying model family; not statistically independent error sources.",
+ "agreement":"Every Boolean rubric criterion must match, with a nonempty reason per criterion and no uncertainty flags; otherwise human adjudication.",
+ "sample":"One runtime-completed answer per each of the 11 tasks. Choose lowest SHA256 of sample-seed-0|task_id|config|rep. Fixed before outcomes; only runtime-failed attempts are ineligible for semantic review. Final sample selected after all attempts terminate.",
+ "expansion":"If a sampled human verdict overturns agent unanimous pass/fail, require human review of every completed answer for that task across all four conditions and repetitions.",
+ "runtime_failures":"Automatic failures; no model or human may override them as passes.",
+ "missing_or_stale_reviews":"Pending, not passes or confirmed failures.",
+ "human_workload":"At most 11 initial sample cases, plus disagreements, uncertainty and any task expansions; overlapping categories counted once.",
+ "cost_scope":"Codex subscription grading usage is separate from the capped Anthropic evaluation API spend and will be disclosed.",
+ "no_tuning":"No final-task outcomes used to change agent instructions, runtime or task keys. Any necessary correction requires a new version and separate results."
+}

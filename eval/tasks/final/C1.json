@@ -1,0 +1,17 @@
+{
+  "id": "C1",
+  "suite_version": "final-v3-reviewed",
+  "group": "C",
+  "blueprint": "C1",
+  "request": {
+    "task": "Use the literal case-insensitive text filter 'AI agent' on PM postings in pai-w-2026-05-25 and pai-w-2026-06-08, across all configured sources. Report the complete raw and distinct captured-opening counts and source breakdowns in both windows, under the published identity rule. Is a comparison of these captured cohorts supported by the collection context? Explain the supported comparison and its limits; do not assume that all comparisons must be refused.",
+    "snapshot_ids": [
+      "pai-w-2026-05-25",
+      "pai-w-2026-06-08"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

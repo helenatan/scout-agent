@@ -1,0 +1,16 @@
+{
+  "id": "E3",
+  "suite_version": "final-v3-reviewed",
+  "group": "E",
+  "blueprint": "E3",
+  "request": {
+    "task": "Do any of Perplexity's PM postings captured in snapshot pai-2026-09 (company filter 'Perplexity') explicitly require experience with MCP (Model Context Protocol) as a candidate qualification? Inspect every posting in that set, list the posting ids you checked, and state precisely what this set does and does not allow you to conclude.",
+    "snapshot_ids": [
+      "pai-2026-09"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

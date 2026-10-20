@@ -1,0 +1,16 @@
+{
+  "id": "F-R1",
+  "suite_version": "fresh-v1-draft",
+  "group": "R",
+  "blueprint": "F-R1",
+  "request": {
+    "task": "Which of Brex's PM postings were captured in pai-w-2026-07-27 (company filter 'Brex')? For each record give the posting id, title, source and first-seen date. Then tell me how many records that is and how many distinct openings they represent under the snapshot's published identity rule, and show which records count as the same opening.",
+    "snapshot_ids": [
+      "pai-w-2026-07-27"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

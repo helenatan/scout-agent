@@ -1,0 +1,19 @@
+{
+  "id": "F-E1",
+  "suite_version": "fresh-v1-draft",
+  "group": "E",
+  "blueprint": "F-E1",
+  "request": {
+    "task": "For each of these four PM postings, is SQL skill a required candidate qualification, a preferred one, mentioned without being a candidate qualification, or not mentioned at all? Quote the text that settles each case and name the part of the posting it appears in: 1000f678-3ab2-4289-9741-a94c3c640acc (Pika, Product Manager, Growth, pai-w-2026-06-29); d7b6587a-4851-4401-b359-bff9ab4d2a5e (Walmart, Staff, Product Manager - Automated Outbound Dispatch, pai-w-2026-07-13); 8493022d-aa58-4c7c-a501-4611cd804b6d (ZoomInfo, Product Manager II – FP&A / Microsoft Fabric, pai-w-2026-08-24); a3f8982d-a700-4d79-bf6c-c16dc45cf2e4 (Risant Health, Analytics Product Manager, pai-w-2026-07-20).",
+    "snapshot_ids": [
+      "pai-w-2026-06-29",
+      "pai-w-2026-07-13",
+      "pai-w-2026-07-20",
+      "pai-w-2026-08-24"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": false
+  },
+  "evidence_required": true
+}

@@ -1,0 +1,16 @@
+{
+  "id": "C3",
+  "suite_version": "final-v3-reviewed",
+  "group": "C",
+  "blueprint": "C3",
+  "request": {
+    "task": "No PM postings from Cognition (company filter 'Cognition') were captured in snapshot pai-2026-07. Can we conclude that Cognition had no PM openings during July 2026? Explain what the captured data and the collection metadata do and do not establish, and name the information that would be needed to settle the question.",
+    "snapshot_ids": [
+      "pai-2026-07"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

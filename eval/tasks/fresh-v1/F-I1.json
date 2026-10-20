@@ -1,0 +1,17 @@
+{
+  "id": "F-I1",
+  "suite_version": "fresh-v1-draft",
+  "group": "I",
+  "blueprint": "F-I1",
+  "request": {
+    "task": "A colleague says: 'Walmart more than doubled its PM openings from the week of July 20 to the week of August 17, and its senior openings that require at least 9 years of product-management experience doubled too.' Check this using company filter 'Walmart' in pai-w-2026-07-20 and pai-w-2026-08-17. For each week report raw records and distinct openings under the published identity rule, and how many distinct openings require at least 9 years of product-management experience under every option the posting offers, citing the qualification text. Assess each half of the claim separately.",
+    "snapshot_ids": [
+      "pai-w-2026-07-20",
+      "pai-w-2026-08-17"
+    ],
+    "max_cost_usd": 1.5,
+    "deadline_seconds": 400,
+    "require_complete_results": true
+  },
+  "evidence_required": true
+}

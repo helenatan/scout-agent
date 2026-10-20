@@ -1,0 +1,18 @@
+{
+  "id": "E1",
+  "suite_version": "final-v3-reviewed",
+  "group": "E",
+  "blueprint": "E1",
+  "request": {
+    "task": "For these four PM postings, classify prior experience building, shipping or working on AI-agent products as required, preferred, or merely mentioned without an agent-specific candidate qualification. Cite the settling text and distinguish general AI/ML experience from agent-specific experience: 014c0ab7-92cf-4c27-af91-6c32b3e2ff0b (S&P Global, pai-2026-05); 6e455c11-4500-47c2-b370-95f11b987e84 (GEICO, pai-2026-06); b9b23cef-8956-4235-8c95-7b2b1b0f7181 (Google, pai-2026-07); 2c272e14-745f-45d7-bfdf-bf7df2bdbddb (Glean, pai-2026-07).",
+    "snapshot_ids": [
+      "pai-2026-05",
+      "pai-2026-06",
+      "pai-2026-07"
+    ],
+    "max_cost_usd": 1.0,
+    "deadline_seconds": 300,
+    "require_complete_results": false
+  },
+  "evidence_required": true
+}
