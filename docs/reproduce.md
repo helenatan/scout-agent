@@ -118,7 +118,7 @@ SCOUT_PROVIDER=claude-code SCOUT_RUNS_DB=eval/results/my-store.sqlite SCOUT_SPEN
 ```
 
 Use `SCOUT_PROVIDER=anthropic` with `ANTHROPIC_API_KEY` to bill the Messages API instead. Run records land in
-`eval/results/<label>/runs/`. For the original 11-task layout, `eval/run_original_suite.py` wraps the same steps and
+`eval/results/<label>/runs/`. For the tuning set (11 tasks), `eval/run_original_suite.py` wraps the same steps and
 grades with grader v3 at the end.
 
 ### 4. Grade
@@ -130,14 +130,14 @@ Graders are task-specific, because each task has its own right answer:
 - **Judgment by rubric.** Follow `eval/tasks/fresh-v1/judge.py`: yes/no rubric items, each answered by two judge models
   through the Claude Code CLI; both must say yes, and a disagreement goes to a person.
 - **Entry point:** `.venv/bin/python eval/tasks/fresh-v1/grade_fresh.py eval/results/<label>` grades a results folder
-  for the fresh suite; copy the folder as a template for your own suite.
+  for the test set; copy the folder as a template for your own suite.
 
 Freeze tasks, keys and grader (hash them, as in `eval/tasks/fresh-v1/FREEZE.json`) before the first attempt, and hold
 out tasks you never tune against.
 
 ## What an exact re-run would need
 
-The original snapshot at `m0/data/pai_dump_2026-09-06.sqlite`, plus `eval/tasks/final/_keys.json` for the original
-suite, and `eval/tasks/fresh-v1/_keys.json` and `rubric.json` for the fresh suite. With those in place,
+The original snapshot at `m0/data/pai_dump_2026-09-06.sqlite`, plus `eval/tasks/final/_keys.json` for the tuning
+set, and `eval/tasks/fresh-v1/_keys.json` and `rubric.json` for the test set. With those in place,
 `eval/run_original_suite.py` and `eval/run_matrix.py` re-run any setup, and the published graders score it. Model
 outputs vary from attempt to attempt, so a re-run reproduces the distribution, not the exact pass counts.

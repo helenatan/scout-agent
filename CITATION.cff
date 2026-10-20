@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this work, please cite it as below."
-title: "Scout: Better Tools or a Stronger Model?"
+title: "Scout: Can better tools make a cheaper AI model reliable enough for the job?"
 abstract: >-
   A controlled case study of whether better data tools let a cheaper Claude model match a more expensive one on
   research tasks over captured job postings. Includes the agent, five tool versions, the evaluation harness, graders

@@ -1,5 +1,8 @@
 # Results
 
+The narrative version of these results is [the write-up](https://helenatan.substack.com/p/can-better-tools-make-a-cheaper-ai)
+and [the interactive study](https://scout-agent-study.vercel.app). This page holds the full tables behind them.
+
 Every pass count, cost and time in the tables below is recomputed from [`results/attempts.csv`](../results/attempts.csv)
 by `python scripts/verify_results.py`, which exits with an error if any number here drifts from the data.
 Figures marked *(from run traces)* come from the saved run records, which are not published because they contain
@@ -115,6 +118,8 @@ disagreement goes to a person.
 | Sonnet 5.5 + basic tools (v1), added later | 23/30 (77%, 1 pending) | 24/30 (80%, 1 pending) | $0.049 | 11 s* | $0.064 / $0.061 |
 
 *Measured on a different day from the other three rows; not comparable. Pass rates count a pending attempt as not passed.
+
+![Test set pass rate for Sonnet 5.5 and Opus 5, basic and final tools](images/fig5-test-set.png)
 
 **Original and corrected grades.** The original grader is the one frozen before the run. Afterwards two bugs were found:
 it missed quotes stored in the structured part of an answer, and it could not read per-source counts written as `1/1`.
