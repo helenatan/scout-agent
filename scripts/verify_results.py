@@ -132,13 +132,6 @@ def main() -> int:
         print(f"| {label} | {s1['pass']}/30 ({s1['pass'] / 30:.0%}{pend(s1)}) | {s2['pass']}/30 ({s2['pass'] / 30:.0%}{pend(s2)}) | ${s2['cost']:.3f} | "
               f"{s2['median_s']:.0f} s | ${s1['per_pass']:.3f} / ${s2['per_pass']:.3f} |")
 
-    print("\n## Final evaluation, September 27 (official dual-reviewer grades, provisional)\n")
-    print("| Config | Model and tools | Confirmed passes | Pending human review |\n|---|---|---|---|")
-    fin = pick(rows, experiment="final-eval", grader="final-agent-policy-v2")
-    for cfg, model, tv in [("A", "haiku-4.5", "v1"), ("B", "opus-5", "v1"), ("C", "haiku-4.5", "v2"), ("D", "opus-5", "v2")]:
-        s = stats(pick(fin, model=model, tool_version=tv))
-        print(f"| {cfg} | {model} + {tv} | {s['pass']}/33 | {s['pending']} |")
-
     if a.markdown:
         return 0
     print()

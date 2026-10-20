@@ -49,8 +49,8 @@ Seven development tasks (R1 R3 E1 E3 C1 C2 I2) and four held-out tasks (R2 E2 C3
 | Haiku 4.5 + summary tools (v2) | 27/132 | 20% | $0.033 |
 | Haiku 4.5 + explicit caveats (v3) + self-check (V0) | 52/135 | 39% | $0.049 |
 
-The Opus reference pools the 33 attempts of the September 27 final evaluation with 11 later attempts. Haiku + summary tools pools the final
-evaluation's 33 attempts with 99 round-4 tuning attempts; the V0 row is round 4 only (development, held-out and the
+The Opus reference pools 33 attempts from an earlier evaluation run (September 27) with 11 later attempts. Haiku +
+summary tools pools that run's 33 attempts with 99 round-4 tuning attempts; the V0 row is round 4 only (development, held-out and the
 held-out re-measure).
 
 ### Why the summary tools made Sonnet worse
@@ -151,22 +151,6 @@ grader, 27 vs 28 on a hand reading) and was at least as good as Opus with basic 
 reading) at 24% of its cost per attempt. On the tuning set the final tools took Sonnet from 77% to 94%; on the test set
 most of that gain did not appear. Cost per passing answer under the corrected grader was the same for Sonnet with basic
 and final tools ($0.061).
-
-## Final evaluation, September 27
-
-The planned final evaluation compared four configurations on the original 11 tasks: Haiku 4.5 and Opus 5, each with
-basic and summary tools, 132 attempts in all. Its official grading used two independent reviewer agents plus human
-review of disagreements and a predeclared sample; 40 items still await human review, so those grades are provisional
-and pending items count as neither pass nor fail. The same attempts graded with grader v3 are part of the tables above.
-
-| Config | Model and tools | Confirmed passes | Pending human review |
-|---|---|---|---|
-| A | Haiku 4.5 + basic tools | 0/33 | 18 |
-| B | Opus 5 + basic tools | 29/33 | 4 |
-| C | Haiku 4.5 + summary tools | 2/33 | 14 |
-| D | Opus 5 + summary tools | 29/33 | 4 |
-
-Details and disclosures: [final-results.md](final-results.md).
 
 ## Limits
 

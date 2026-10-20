@@ -131,13 +131,12 @@ Scout expects, and what an exact re-run would need.
 | `scout/tools/` | The three data tools, the MCP server, and the tool versions (`pai_tools.py` holds v1 and v2; `tuned.py`, `dated.py`, `v5.py` hold v3 to v5) |
 | `scout/ui/` | Local web UI for one run and for comparing saved results |
 | `eval/run_original_suite.py` | Run one model and tool version on the tuning set (original 11 tasks), then grade with grader v3 |
-| `eval/run_matrix.py` | General runner used for the test set and the final evaluation |
+| `eval/run_matrix.py` | General runner used for the test set |
 | `eval/graders/original_v3/` | Deterministic grader for the tuning set (frozen, hash-checked) |
 | `eval/tasks/final/`, `eval/tasks/fresh-v1/` | Task prompts for the tuning set (`final/`) and the test set (`fresh-v1/`), plus the test set's two-part grader, freeze record and decisions |
 | `results/` | One row per graded attempt (pass/fail, cost, latency, tokens; no answer text) and its provenance |
 | `scripts/` | Demo data, result verification, and the export script that produced `results/` |
 | `docs/` | Results, reproduction guide, tool versions, architecture diagrams, figures |
-| `site/` | Viewer for the September 27 evaluation run, a development record; without the private data file it shows labeled sample data. The study's findings site is [scout-agent-study.vercel.app](https://scout-agent-study.vercel.app) |
 | `tests/` | Unit and integration tests, runnable without an API key |
 
 ## Limits

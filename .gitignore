@@ -9,7 +9,6 @@ __pycache__/
 *.log
 eval/results/
 eval/tasks/**/_*
-site/data.json
 
 # local research data and outputs
 m0/
